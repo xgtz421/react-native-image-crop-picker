@@ -51,7 +51,9 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
@@ -111,6 +113,12 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
     private ResultCollector resultCollector = new ResultCollector();
     private Compression compression = new Compression();
     private ReactApplicationContext reactContext;
+
+
+    // 已经完成压缩处理的图片集合
+    private Set<String> completeImageSet = new HashSet<>();
+    // 需要压缩的图片总数量
+    private int totalImagesToCompress = 0;
 
     PickerModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -509,6 +517,15 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
             return;
         }
 
+        WritableMap image = getImage(activity, path);
+        this.completeImageSet.add(image.getString("path"));
+        // 发送单个任务完成的事件
+        SendEventService.sendSingleCompressionCompleteEvent(reactContext, this.totalImagesToCompress, this.completeImageSet.size());
+        if (this.completeImageSet.size() >= this.totalImagesToCompress) {
+            // 发送所有任务完成的事件
+            SendEventService.sendAllCompressionCompleteEvent(reactContext, this.totalImagesToCompress);
+
+        }
         resultCollector.notifySuccess(getImage(activity, path));
     }
 
@@ -789,56 +806,78 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
     }
 
     private void imagePickerResult(Activity activity, final int requestCode, final int resultCode, final Intent data) {
-        if (resultCode == Activity.RESULT_CANCELED) {
-            resultCollector.notifyProblem(E_PICKER_CANCELLED_KEY, E_PICKER_CANCELLED_MSG);
-        } else if (resultCode == Activity.RESULT_OK) {
-            if (multiple) {
-                ClipData clipData = data.getClipData();
+        new Thread(
+            new Runnable() {
+                @Override
+                public void run() {
+                    if (resultCode == Activity.RESULT_CANCELED) {
+                        resultCollector.notifyProblem(E_PICKER_CANCELLED_KEY, E_PICKER_CANCELLED_MSG);
+                    } else if (resultCode == Activity.RESULT_OK) {
+                        // 重置需要压缩数量
+                        resetTotalImagesCompress();
+                        if (multiple) {
+                            ClipData clipData = data.getClipData();
 
-                try {
-                    // only one image selected
-                    if (clipData == null) {
-                        resultCollector.setWaitCount(1);
-                        getAsyncSelection(activity, data.getData(), false);
-                    } else {
-                        resultCollector.setWaitCount(clipData.getItemCount());
-                        for (int i = 0; i < clipData.getItemCount(); i++) {
-                            getAsyncSelection(activity, clipData.getItemAt(i).getUri(), false);
+                            try {
+                                // only one image selected
+                                if (clipData == null) {
+                                    resultCollector.setWaitCount(1);
+                                    // 设置需要压缩的总数量
+                                    setTotalImagesToCompress(1);
+                                    // 发送开始压缩的事件
+                                    SendEventService.sendCompressionStartEvent(reactContext, 1);
+                                    getAsyncSelection(activity, data.getData(), false);
+                                } else {
+                                    int itemCount = clipData.getItemCount();
+                                    // 设置需要压缩的总数量
+                                    setTotalImagesToCompress(itemCount);
+                                    // 发送开始压缩的事件
+                                    SendEventService.sendCompressionStartEvent(reactContext, itemCount);
+                                    resultCollector.setWaitCount(itemCount);
+                                    for (int i = 0; i < clipData.getItemCount(); i++) {
+                                        getAsyncSelection(activity, clipData.getItemAt(i).getUri(), false);
+                                    }
+                                }
+                            } catch (Exception ex) {
+                                resultCollector.notifyProblem(E_NO_IMAGE_DATA_FOUND, ex.getMessage());
+                            }
+
+                        } else {
+                            Uri uri = data.getData();
+
+                            // if the result comes in clipData format (which apparently it does in some cases)
+                            if (uri == null) {
+                                ClipData clipData = data.getClipData();
+                                if (clipData != null && clipData.getItemCount() > 0) {
+                                    ClipData.Item item = clipData.getItemAt(0);
+                                    uri = item.getUri();
+                                }
+                            }
+
+                            // error out if uri is still null
+                            if(uri == null) {
+                                resultCollector.notifyProblem(E_NO_IMAGE_DATA_FOUND, "Cannot resolve image url");
+                                return;
+                            }
+
+                            if (cropping) {
+                                startCropping(activity, uri);
+                            } else {
+                                try {
+                                    // 设置需要压缩的总数量
+                                    setTotalImagesToCompress(1);
+                                    // 发送开始压缩的事件
+                                    SendEventService.sendCompressionStartEvent(reactContext, 1);
+                                    getAsyncSelection(activity, uri, false);
+                                } catch (Exception ex) {
+                                    resultCollector.notifyProblem(E_NO_IMAGE_DATA_FOUND, ex.getMessage());
+                                }
+                            }
                         }
-                    }
-                } catch (Exception ex) {
-                    resultCollector.notifyProblem(E_NO_IMAGE_DATA_FOUND, ex.getMessage());
-                }
-
-            } else {
-                Uri uri = data.getData();
-
-                // if the result comes in clipData format (which apparently it does in some cases)
-                if (uri == null) {
-                    ClipData clipData = data.getClipData();
-                    if (clipData != null && clipData.getItemCount() > 0) {
-                        ClipData.Item item = clipData.getItemAt(0);
-                        uri = item.getUri();
-                    }
-                }
-
-                // error out if uri is still null
-                if(uri == null) {
-                    resultCollector.notifyProblem(E_NO_IMAGE_DATA_FOUND, "Cannot resolve image url");
-                    return;
-                }
-
-                if (cropping) {
-                    startCropping(activity, uri);
-                } else {
-                    try {
-                        getAsyncSelection(activity, uri, false);
-                    } catch (Exception ex) {
-                        resultCollector.notifyProblem(E_NO_IMAGE_DATA_FOUND, ex.getMessage());
                     }
                 }
             }
-        }
+        ).start();
     }
 
     private void cameraPickerResult(Activity activity, final int requestCode, final int resultCode, final Intent data) {
@@ -963,6 +1002,15 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
 
         return video;
 
+    }
+
+    private void setTotalImagesToCompress(int count) {
+        this.totalImagesToCompress = count;
+    }
+
+    private void resetTotalImagesCompress() {
+        this.totalImagesToCompress = 0;
+        this.completeImageSet.clear();
     }
 
     private static WritableMap getCroppedRectMap(Intent data) {

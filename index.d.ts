@@ -1,4 +1,6 @@
 declare module "react-native-image-crop-picker" {
+    import { NativeEventEmitter, NativeModules } from 'react-native';
+
     /**
      * AVAssetExportPreset presets.
      *
@@ -507,4 +509,31 @@ declare module "react-native-image-crop-picker" {
     const ImageCropPicker: ImageCropPicker;
 
     export default ImageCropPicker;
+
+    type EventListener = {
+        remove: () => void;
+    };
+    export type ImageCropPickerEventEmitter = NativeEventEmitter & {
+        addListener(
+            eventType: 'onCompressionStart',
+            listener: (event: { total: number }) => void
+        ): EventListener;
+
+        addListener(
+            eventType: 'onSingleCompressionComplete',
+            listener: (event: { total: number, completed: number }) => void
+        ): EventListener;
+
+        addListener(
+            eventType: 'onAllCompressionComplete',
+            listener: (event: { total: number }) => void
+        ): EventListener;
+
+        addListener(
+            eventType: 'onCompressionError',
+            listener: (event: { error: Error }) => void
+        ): EventListener;
+    }
+
+    export const ImageCropPickerEventEmitter: ImageCropPickerEventEmitter;
 }
