@@ -3,10 +3,14 @@ package com.reactnative.ivpusic.imagepicker;
 import android.util.Log;
 
 import com.facebook.react.bridge.Promise;
+import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeArray;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -21,6 +25,16 @@ class ResultCollector {
     private WritableArray arrayResult;
     private boolean resultSent;
 
+    // 图片数据列表
+    private final ArrayList<ImageData> imageDataList = new ArrayList<ImageData>();
+
+    // React 上下文
+    private ReactApplicationContext reactContext;
+
+    public void SetContext(ReactApplicationContext context) {
+        this.reactContext = context;
+    }
+
     synchronized void setup(Promise promise, boolean multiple) {
         this.promise = promise;
         this.multiple = multiple;
@@ -31,6 +45,7 @@ class ResultCollector {
 
         if (multiple) {
             this.arrayResult = new WritableNativeArray();
+            this.imageDataList.clear();
         }
     }
 
@@ -55,6 +70,7 @@ class ResultCollector {
         return true;
     }
 
+    // Obsolete 该方法已经废弃，后续需要删除
     synchronized void notifySuccess(WritableMap result) {
         if (!isRequestValid()) {
             return;
@@ -69,6 +85,35 @@ class ResultCollector {
                 resultSent = true;
             }
         } else {
+            promise.resolve(result);
+            resultSent = true;
+        }
+    }
+
+    synchronized void notifySuccessImage(ImageData imageData) {
+        if (!isRequestValid()) {
+            return;
+        }
+        if (multiple) {
+            // 缓存图片数据
+            imageDataList.add(imageData);
+            // 将单张照片信息发送到JS端
+            SendEventService.sendSingleCompressionCompleteEvent(reactContext, imageData);
+            int currentCount = waitCounter.addAndGet(1);
+            if (currentCount == waitCount) {
+                // 将所有的照片信息发送到JS端
+                SendEventService.sendAllCompressionCompleteEvent(reactContext, imageDataList);
+                // 选择照片的promise
+                promise.resolve(Utils.getImageWritableArray(imageDataList));
+                resultSent = true;
+            }
+        } else {
+            // 将单张照片信息发送到JS端
+            SendEventService.sendSingleCompressionCompleteEvent(reactContext, imageData);
+            // 将所有的照片信息发送到JS端
+            SendEventService.sendAllCompressionCompleteEvent(reactContext, (ArrayList<ImageData>) Collections.singletonList(imageData));
+
+            WritableMap result = Utils.getImageWritableMap(imageData);
             promise.resolve(result);
             resultSent = true;
         }

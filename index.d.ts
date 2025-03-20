@@ -521,12 +521,12 @@ declare module "react-native-image-crop-picker" {
 
         addListener(
             eventType: 'onSingleCompressionComplete',
-            listener: (event: { total: number, completed: number }) => void
+            listener: (event: { image: Image }) => void
         ): EventListener;
 
         addListener(
             eventType: 'onAllCompressionComplete',
-            listener: (event: { total: number }) => void
+            listener: (event: { images: Image[] }) => void
         ): EventListener;
 
         addListener(

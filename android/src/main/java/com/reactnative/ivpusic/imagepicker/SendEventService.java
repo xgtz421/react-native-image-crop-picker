@@ -6,6 +6,8 @@ import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.Arguments;
 
+import java.util.ArrayList;
+
 public class SendEventService {
 
     /**
@@ -24,13 +26,11 @@ public class SendEventService {
      * 发送一个事件，表示单个压缩任务已完成。
      *
      * @param reactContext React 上下文
-     * @param total 需要压缩的总项数
-     * @param completed 已完成压缩的项数
+     * @param imageData 照片信息
      */
-    public static void sendSingleCompressionCompleteEvent(ReactContext reactContext, int total, int completed) {
+    public static void sendSingleCompressionCompleteEvent(ReactContext reactContext, ImageData imageData) {
         WritableMap params = Arguments.createMap();
-        params.putInt("total", total);
-        params.putInt("completed", completed);
+        params.putMap("image", Utils.getImageWritableMap(imageData));
         sendEvent(reactContext, "onSingleCompressionComplete", params);
     }
 
@@ -38,11 +38,11 @@ public class SendEventService {
      * 发送一个事件，表示所有压缩任务已完成。
      *
      * @param reactContext React 上下文
-     * @param total 已完成压缩的总项数
+     * @param imageDataList 照片信息列表
      */
-    public static void sendAllCompressionCompleteEvent(ReactContext reactContext, int total) {
+    public static void sendAllCompressionCompleteEvent(ReactContext reactContext, ArrayList<ImageData> imageDataList) {
         WritableMap params = Arguments.createMap();
-        params.putInt("total", total);
+        params.putArray("images", Utils.getImageWritableArray(imageDataList));
         sendEvent(reactContext, "onAllCompressionComplete", params);
     }
 

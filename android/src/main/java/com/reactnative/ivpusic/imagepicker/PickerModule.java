@@ -33,6 +33,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.PermissionAwareActivity;
@@ -51,8 +52,10 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -60,6 +63,7 @@ import java.util.concurrent.Callable;
 
 
 class PickerModule extends ReactContextBaseJavaModule implements ActivityEventListener {
+    public  static final String tag = "ImageSelector:";
 
     private static final int IMAGE_PICKER_REQUEST = 61110;
     private static final int CAMERA_PICKER_REQUEST = 61111;
@@ -110,20 +114,15 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
 
     private Uri mCameraCaptureURI;
     private String mCurrentMediaPath;
-    private ResultCollector resultCollector = new ResultCollector();
-    private Compression compression = new Compression();
-    private ReactApplicationContext reactContext;
-
-
-    // 已经完成压缩处理的图片集合
-    private Set<String> completeImageSet = new HashSet<>();
-    // 需要压缩的图片总数量
-    private int totalImagesToCompress = 0;
+    private final ResultCollector resultCollector = new ResultCollector();
+    private final Compression compression = new Compression();
+    private final ReactApplicationContext reactContext;
 
     PickerModule(ReactApplicationContext reactContext) {
         super(reactContext);
         reactContext.addActivityEventListener(this);
         this.reactContext = reactContext;
+        this.resultCollector.SetContext(this.reactContext);
     }
 
     private String getTmpDir(Activity activity) {
@@ -517,16 +516,7 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
             return;
         }
 
-        WritableMap image = getImage(activity, path);
-        this.completeImageSet.add(image.getString("path"));
-        // 发送单个任务完成的事件
-        SendEventService.sendSingleCompressionCompleteEvent(reactContext, this.totalImagesToCompress, this.completeImageSet.size());
-        if (this.completeImageSet.size() >= this.totalImagesToCompress) {
-            // 发送所有任务完成的事件
-            SendEventService.sendAllCompressionCompleteEvent(reactContext, this.totalImagesToCompress);
-
-        }
-        resultCollector.notifySuccess(getImage(activity, path));
+        resultCollector.notifySuccessImage(getImageData(path));
     }
 
     private Bitmap validateVideo(Uri uri) throws Exception {
@@ -749,6 +739,45 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
         return image;
     }
 
+    /**
+     * 压缩并返回压缩后的图片对象信息
+     * @param path 图片的路径，该路径是一个缓存区的临时路径
+     * @return ImageData
+     */
+    private ImageData getImageData(String path) throws Exception {
+
+        if (path.startsWith("http://") || path.startsWith("https://")) {
+            throw new Exception("Cannot select remote files");
+        }
+        BitmapFactory.Options original = validateImage(path);
+        ExifInterface originalExif = new ExifInterface(path);
+        int orientation = originalExif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1);
+        boolean invertDimensions = (
+                orientation == ExifInterface.ORIENTATION_ROTATE_90 ||
+                        orientation == ExifInterface.ORIENTATION_ROTATE_270 ||
+                        orientation == ExifInterface.ORIENTATION_TRANSPOSE ||
+                        orientation == ExifInterface.ORIENTATION_TRANSVERSE
+        );
+
+
+        // if compression options are provided image will be compressed. If none options is provided,
+        // then original image will be returned
+        File compressedImage = compression.compressImage(this.reactContext, options, path, original);
+        String compressedImagePath = compressedImage.getPath();
+        BitmapFactory.Options options = validateImage(compressedImagePath);
+        long modificationDate = new File(path).lastModified();
+
+        return new ImageData(
+                "file://" + compressedImagePath,
+                invertDimensions ? options.outHeight : options.outWidth,
+                invertDimensions ? options.outWidth : options.outHeight,
+                options.outMimeType,
+                (int) new File(compressedImagePath).length(),
+                String.valueOf(modificationDate),
+                new File(path).getName()
+        );
+    }
+
     private void configureCropperColors(UCrop.Options options) {
         if (cropperActiveWidgetColor != null) {
             options.setActiveControlsWidgetColor(Color.parseColor(cropperActiveWidgetColor));
@@ -813,8 +842,6 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
                     if (resultCode == Activity.RESULT_CANCELED) {
                         resultCollector.notifyProblem(E_PICKER_CANCELLED_KEY, E_PICKER_CANCELLED_MSG);
                     } else if (resultCode == Activity.RESULT_OK) {
-                        // 重置需要压缩数量
-                        resetTotalImagesCompress();
                         if (multiple) {
                             ClipData clipData = data.getClipData();
 
@@ -822,29 +849,28 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
                                 // only one image selected
                                 if (clipData == null) {
                                     resultCollector.setWaitCount(1);
-                                    // 设置需要压缩的总数量
-                                    setTotalImagesToCompress(1);
                                     // 发送开始压缩的事件
                                     SendEventService.sendCompressionStartEvent(reactContext, 1);
                                     getAsyncSelection(activity, data.getData(), false);
                                 } else {
                                     int itemCount = clipData.getItemCount();
-                                    // 设置需要压缩的总数量
-                                    setTotalImagesToCompress(itemCount);
                                     // 发送开始压缩的事件
                                     SendEventService.sendCompressionStartEvent(reactContext, itemCount);
                                     resultCollector.setWaitCount(itemCount);
                                     for (int i = 0; i < clipData.getItemCount(); i++) {
+                                        Log.i(PickerModule.tag, String.valueOf(clipData.getItemAt(i).getUri()));
                                         getAsyncSelection(activity, clipData.getItemAt(i).getUri(), false);
+
                                     }
                                 }
                             } catch (Exception ex) {
+                                // 发送压缩失败的事件
+                                SendEventService.sendCompressionErrorEvent(reactContext, ex.getMessage());
                                 resultCollector.notifyProblem(E_NO_IMAGE_DATA_FOUND, ex.getMessage());
                             }
 
                         } else {
                             Uri uri = data.getData();
-
                             // if the result comes in clipData format (which apparently it does in some cases)
                             if (uri == null) {
                                 ClipData clipData = data.getClipData();
@@ -864,8 +890,6 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
                                 startCropping(activity, uri);
                             } else {
                                 try {
-                                    // 设置需要压缩的总数量
-                                    setTotalImagesToCompress(1);
                                     // 发送开始压缩的事件
                                     SendEventService.sendCompressionStartEvent(reactContext, 1);
                                     getAsyncSelection(activity, uri, false);
@@ -1002,15 +1026,6 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
 
         return video;
 
-    }
-
-    private void setTotalImagesToCompress(int count) {
-        this.totalImagesToCompress = count;
-    }
-
-    private void resetTotalImagesCompress() {
-        this.totalImagesToCompress = 0;
-        this.completeImageSet.clear();
     }
 
     private static WritableMap getCroppedRectMap(Intent data) {
