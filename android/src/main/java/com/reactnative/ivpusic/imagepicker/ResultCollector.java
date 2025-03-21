@@ -89,6 +89,23 @@ class ResultCollector {
         }
     }
 
+    synchronized void notifyBatchCompressSuccess(ImageData imageData) {
+        if (!isRequestValid()) {
+            return;
+        }
+        // 缓存图片数据
+        imageDataList.add(imageData);
+        // 将单张照片信息发送到JS端
+        SendEventService.sendSingleCompressionCompleteEvent(reactContext, imageData);
+        int currentCount = waitCounter.addAndGet(1);
+        if (currentCount == waitCount) {
+            // 将所有的照片信息发送到JS端
+            SendEventService.sendBatchCompressionCompleteEvent(reactContext, imageDataList);
+            // 选择照片的promise
+            promise.resolve(Utils.getImageWritableArray(imageDataList));
+            resultSent = true;
+        }
+    }
     synchronized void notifySuccessImage(ImageData imageData) {
         if (!isRequestValid()) {
             return;

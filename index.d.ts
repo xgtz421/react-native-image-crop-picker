@@ -401,7 +401,7 @@ declare module "react-native-image-crop-picker" {
      * 压缩图片时，生成大图和原图信息
      */
     export type CompressImageOptions = ImageOptions & {
-        originImagePaths: string[];
+        mediaUris: string[];
 
         largeImageWidth?: number; // 大图宽度
         largeImageHeight?: number; // 大图高度
@@ -566,16 +566,17 @@ declare module "react-native-image-crop-picker" {
         O extends { mediaType: 'video'; } ? Video :
         ImageOrVideo;
 
-    export function openPicker<O extends OpenPickerOptions>(options: O): Promise<CompressedImage[]>;
-    export function openCamera<O extends OpenCameraOptions>(options: O): Promise<PossibleArray<O, CompressedImage<O>>>;
+    export function openPicker(options: OpenPickerOptions): Promise<CompressedImage[]>;
+    export function openCamera(options: OpenCameraOptions): Promise<CompressedImage[]>;
+    export function compressImage(options: CompressImageOptions): Promise<CompressedImage[]>;
     export function openCropper(options: CropperOptions): Promise<CompressedImage>;
     export function clean(): Promise<void>;
     export function cleanSingle(path: string): Promise<void>;
 
     export interface ImageCropPicker {
-        openPicker<O extends OpenPickerOptions>(options: O): Promise<CompressedImage[]>;
-        openCamera<O extends OpenCameraOptions>(options: O): Promise<CompressedImage>;
-        compressImage<O extends CompressImageOptions>(options: O): Promise<PossibleArray<O, CompressedImage<O>>>;
+        openPicker(options: OpenPickerOptions): Promise<CompressedImage[]>;
+        openCamera(options: OpenCameraOptions): Promise<CompressedImage>;
+        compressImage(options: CompressImageOptions): Promise<CompressedImage[]>;
         openCropper(options: CropperOptions): Promise<Image>;
         clean(): Promise<void>;
         cleanSingle(path: string): Promise<void>;

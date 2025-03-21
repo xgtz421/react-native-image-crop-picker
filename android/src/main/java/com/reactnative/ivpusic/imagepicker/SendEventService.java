@@ -10,24 +10,25 @@ import java.util.ArrayList;
 
 public class SendEventService {
 
-    /**
-     * 发送一个事件，表示压缩过程已经开始。
-     *
-     * @param reactContext React 上下文
-     * @param total 需要压缩的总项数
-     */
+    public static void sendBatchCompressStartEvent(ReactContext reactContext, int total) {
+        WritableMap params = Arguments.createMap();
+        params.putInt("total", total);
+        sendEvent(reactContext, "onBatchCompressionStart", params);
+    }
+
+    public static void sendBatchCompressionCompleteEvent(ReactContext reactContext, ArrayList<ImageData> imageDataList) {
+        WritableMap params = Arguments.createMap();
+        params.putArray("images", Utils.getImageWritableArray(imageDataList));
+        sendEvent(reactContext, "onBatchCompressionComplete", params);
+    }
+
     public static void sendCompressionStartEvent(ReactContext reactContext, int total) {
         WritableMap params = Arguments.createMap();
         params.putInt("total", total);
         sendEvent(reactContext, "onCompressionStart", params);
     }
 
-    /**
-     * 发送一个事件，表示单个压缩任务已完成。
-     *
-     * @param reactContext React 上下文
-     * @param imageData 照片信息
-     */
+
     public static void sendSingleCompressionCompleteEvent(ReactContext reactContext, ImageData imageData) {
         WritableMap params = Arguments.createMap();
         params.putMap("image", Utils.getImageWritableMap(imageData));

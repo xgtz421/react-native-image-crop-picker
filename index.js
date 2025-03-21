@@ -19,3 +19,4 @@ export const openCamera = ImageCropPicker.openCamera;
 export const openCropper = ImageCropPicker.openCropper;
 export const clean = ImageCropPicker.clean;
 export const cleanSingle = ImageCropPicker.cleanSingle;
+export const compressImage = ImageCropPicker.compressImage;

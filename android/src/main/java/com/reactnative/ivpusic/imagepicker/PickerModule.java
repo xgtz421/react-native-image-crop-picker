@@ -10,12 +10,10 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.util.Base64;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
 import androidx.activity.result.PickVisualMediaRequest;
@@ -26,12 +24,11 @@ import androidx.core.content.FileProvider;
 import androidx.exifinterface.media.ExifInterface;
 
 import com.facebook.react.bridge.ActivityEventListener;
-import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.Promise;
-import com.facebook.react.bridge.PromiseImpl;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeMap;
@@ -40,9 +37,7 @@ import com.facebook.react.modules.core.PermissionListener;
 import com.yalantis.ucrop.UCrop;
 import com.yalantis.ucrop.UCropActivity;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -52,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
@@ -438,32 +434,53 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
         });
     }
 
-    private String getBase64StringFromFile(String absoluteFilePath) {
-        InputStream inputStream;
+    @ReactMethod
+    public void compressImage(final ReadableMap options, final Promise promise) {
+        final Activity activity = getCurrentActivity();
 
-        try {
-            inputStream = new FileInputStream(new File(absoluteFilePath));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+        if (activity == null) {
+            promise.reject(E_ACTIVITY_DOES_NOT_EXIST, "Activity doesn't exist");
+            return;
+        }
+
+        setConfiguration(options);
+        resultCollector.setup(promise, true);
+
+        permissionsCheck(activity, promise, Collections.singletonList(Manifest.permission.WRITE_EXTERNAL_STORAGE), () -> {
+            new Thread(() -> {
+                try {
+                    ArrayList<String> mediaUriList = getMediaUriList(options);
+                    int itemCount = mediaUriList.size();
+                    // 发送开始压缩的事件
+                    SendEventService.sendBatchCompressStartEvent(reactContext, itemCount);
+                    resultCollector.setWaitCount(itemCount);
+
+                    for (String mediaUri : mediaUriList) {
+                        Uri uri = Uri.parse(mediaUri);
+                        Log.i("22222", uri.getPath() + ":" + mediaUri);
+                        getAsyncCompressSelection(activity, uri);
+                    }
+                } catch (Exception ex) {
+                    // 发送压缩失败的事件
+                    SendEventService.sendCompressionErrorEvent(reactContext, ex.getMessage());
+                    resultCollector.notifyProblem(E_NO_IMAGE_DATA_FOUND, ex.getMessage());
+                }
+            }).start();
             return null;
-        }
-
-        byte[] bytes;
-        byte[] buffer = new byte[8192];
-        int bytesRead;
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-
-        try {
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                output.write(buffer, 0, bytesRead);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        bytes = output.toByteArray();
-        return Base64.encodeToString(bytes, Base64.NO_WRAP);
+        });
     }
+
+    private ArrayList<String> getMediaUriList(ReadableMap options) {
+        ArrayList<String> mediaUriList = new ArrayList<>();
+        if (options.hasKey("mediaUris")) {
+            ReadableArray mediaUris = options.getArray("mediaUris");
+            for (int i = 0; i < Objects.requireNonNull(mediaUris).size(); i++) {
+                mediaUriList.add(mediaUris.getString(i));
+            }
+        }
+        return mediaUriList;
+    }
+
 
     private String getMimeType(String url) {
         String mimeType = null;
@@ -481,6 +498,49 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
         return mimeType;
     }
 
+    private void getAsyncCompressSelection(final Activity activity, final Uri uri) throws Exception {
+        String path = resolveRealPath(activity, uri, false);
+        if (path == null || path.isEmpty()) {
+            throw new Exception("Cannot resolve asset path.");
+        }
+
+        Integer largeImageWidth = options.hasKey("largeImageWidth") ? options.getInt("largeImageWidth") : 1200;
+        Integer largeImageHeight = options.hasKey("largeImageHeight") ? options.getInt("largeImageHeight") : 1200;
+        Double largeImageQuality = options.hasKey("largeImageQuality") ? options.getDouble("largeImageQuality") : 0.8;
+        CompressedImage compressedLargeImage = getImageData(path, largeImageWidth, largeImageHeight, largeImageQuality);
+
+        boolean keepOriginImage = options.hasKey("keepOriginImage") && options.getBoolean("keepOriginImage");
+        CompressedImage compressedOriginImage = null;
+        if (keepOriginImage) {
+            Integer originImageWidth = options.hasKey("originImageWidth") ? options.getInt("originImageWidth") : null;
+            Integer originImageHeight = options.hasKey("originImageHeight") ? options.getInt("originImageHeight") : null;
+            Double originImageQuality = options.hasKey("originImageQuality") ? options.getDouble("originImageQuality") : 0.8;
+            compressedOriginImage = getImageData(path, originImageWidth, originImageHeight, originImageQuality);
+        }
+
+        ImageData imageData = new ImageData(
+                uri.getPath(),
+                compressedLargeImage.getMime(),
+                compressedLargeImage.getModificationDate());
+
+        imageData.setLargeImagePath(compressedLargeImage.getPath());
+        imageData.setLargeImageName(compressedLargeImage.getFilename());
+        imageData.setLargeImageSize(compressedLargeImage.getSize());
+        imageData.setLargeImageWidth(compressedLargeImage.getWidth());
+        imageData.setLargeImageHeight(compressedLargeImage.getHeight());
+
+        if (compressedOriginImage != null) {
+            imageData.setOriginImagePath(compressedOriginImage.getPath());
+            imageData.setOriginImageName(compressedOriginImage.getFilename());
+            imageData.setOriginImageSize(compressedOriginImage.getSize());
+            imageData.setOriginImageWidth(compressedOriginImage.getWidth());
+            imageData.setOriginImageHeight(compressedOriginImage.getHeight());
+        }
+
+        resultCollector.notifyBatchCompressSuccess(imageData);
+
+    }
+
     /**
      * 获取拍照和裁图的结果
      */
@@ -492,7 +552,6 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
 
         String mime = getMimeType(path);
         if (mime != null && mime.startsWith("video/")) {
-            getVideo(activity, path, mime);
             return null;
         }
 
@@ -517,7 +576,7 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
 
 
         ImageData imageData = new ImageData(
-                uri.getPath(),
+                uri.toString(),
                 compressedThumbnail.getMime(),
                 compressedThumbnail.getModificationDate());
 
@@ -566,7 +625,7 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
         CompressedImage compressedImage = getImageData(path, thumbnailWidth, thumbnailHeight, thumbnailQuality);
 
         ImageData thumbnailImageData = new ImageData(
-                uri.getPath(),
+                uri.toString(),
                 compressedImage.getMime(),
                 compressedImage.getModificationDate());
         thumbnailImageData.setThumbnailPath(compressedImage.getPath());
@@ -578,75 +637,7 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
         resultCollector.notifySuccessImage(thumbnailImageData);
     }
 
-    private Bitmap validateVideo(Uri uri) throws Exception {
-        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-        retriever.setDataSource(getCurrentActivity(), uri);
-        Bitmap bmp = retriever.getFrameAtTime();
 
-        if (bmp == null) {
-            throw new Exception("Cannot retrieve video data");
-        }
-
-        retriever.release();
-        return bmp;
-    }
-
-    private static Long getVideoDuration(String path) {
-        try {
-            MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-            retriever.setDataSource(path);
-
-            return Long.parseLong(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
-        }
-        catch(Exception e) {
-            return -1L;
-        }
-    }
-
-    private void getVideo(final Activity activity, final String path, final String mime) throws Exception {
-        validateVideo(Uri.parse(path));
-        final String compressedVideoPath = getTmpDir(activity) + "/" + UUID.randomUUID().toString() + ".mp4";
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                compression.compressVideo(activity, options, path, compressedVideoPath, new PromiseImpl(new Callback() {
-                    @Override
-                    public void invoke(Object... args) {
-                        String videoPath = (String) args[0];
-                        try {
-                            File file = new File(videoPath);
-                            Uri videoUri = Uri.fromFile(file);
-                            MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-                            retriever.setDataSource(activity, videoUri);
-                            Bitmap bmp = retriever.getFrameAtTime();
-                            long duration = getVideoDuration(videoPath);
-
-                            WritableMap video = new WritableNativeMap();
-                            video.putInt("width", bmp.getWidth());
-                            video.putInt("height", bmp.getHeight());
-                            video.putString("mime", mime);
-                            video.putInt("size", (int) file.length());
-                            video.putInt("duration", (int) duration);
-                            video.putString("path", "file://" + videoPath);
-                            video.putString("modificationDate", String.valueOf(file.lastModified()));
-
-                            retriever.release();
-                            resultCollector.notifySuccess(video);
-                        } catch (Exception e) {
-                            resultCollector.notifyProblem(E_NO_IMAGE_DATA_FOUND, e);
-                        }
-                    }
-                }, new Callback() {
-                    @Override
-                    public void invoke(Object... args) {
-                        WritableNativeMap ex = (WritableNativeMap) args[0];
-                        resultCollector.notifyProblem(ex.getString("code"), ex.getString("message"));
-                    }
-                }));
-            }
-        }).run();
-    }
 
     private String resolveRealPath(Activity activity, Uri uri, boolean isCamera) throws IOException {
         String path;
@@ -846,6 +837,8 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
 
         uCrop.start(activity);
     }
+
+
 
     private void imagePickerResult(Activity activity, final int requestCode, final int resultCode, final Intent data) {
         new Thread(
