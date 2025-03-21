@@ -33,7 +33,6 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
-import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.PermissionAwareActivity;
@@ -52,15 +51,9 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-
-
 
 class PickerModule extends ReactContextBaseJavaModule implements ActivityEventListener {
     public  static final String tag = "ImageSelector:";
@@ -488,6 +481,9 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
         return mimeType;
     }
 
+    /**
+     * 获取拍照和裁图的结果
+     */
     private WritableMap getSelection(Activity activity, Uri uri, boolean isCamera) throws Exception {
         String path = resolveRealPath(activity, uri, isCamera);
         if (path == null || path.isEmpty()) {
@@ -500,9 +496,58 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
             return null;
         }
 
-        return getImage(activity, path);
+        Integer thumbnailWidth = options.hasKey("thumbnailWidth") ? options.getInt("thumbnailWidth") : 300;
+        Integer thumbnailHeight = options.hasKey("thumbnailHeight") ? options.getInt("thumbnailHeight") : 300;
+        Double thumbnailQuality = options.hasKey("thumbnailQuality") ? options.getDouble("thumbnailQuality") : 0.8;
+        CompressedImage compressedThumbnail = getImageData(path, thumbnailWidth, thumbnailHeight, thumbnailQuality);
+
+        Integer largeImageWidth = options.hasKey("largeImageWidth") ? options.getInt("largeImageWidth") : 1200;
+        Integer largeImageHeight = options.hasKey("largeImageHeight") ? options.getInt("largeImageHeight") : 1200;
+        Double largeImageQuality = options.hasKey("largeImageQuality") ? options.getDouble("largeImageQuality") : 0.8;
+        CompressedImage compressedLargeImage = getImageData(path, largeImageWidth, largeImageHeight, largeImageQuality);
+
+        boolean keepOriginImage = options.hasKey("keepOriginImage") && options.getBoolean("keepOriginImage");
+        CompressedImage compressedOriginImage = null;
+        if (keepOriginImage) {
+            Integer originImageWidth = options.hasKey("originImageWidth") ? options.getInt("originImageWidth") : null;
+            Integer originImageHeight = options.hasKey("originImageHeight") ? options.getInt("originImageHeight") : null;
+            Double originImageQuality = options.hasKey("originImageQuality") ? options.getDouble("originImageQuality") : 0.8;
+            compressedOriginImage = getImageData(path, originImageWidth, originImageHeight, originImageQuality);
+        }
+
+
+        ImageData imageData = new ImageData(
+                uri.getPath(),
+                compressedThumbnail.getMime(),
+                compressedThumbnail.getModificationDate());
+
+        imageData.setThumbnailPath(compressedThumbnail.getPath());
+        imageData.setThumbnailName(compressedThumbnail.getFilename());
+        imageData.setThumbnailSize(compressedThumbnail.getSize());
+        imageData.setThumbnailWidth(compressedThumbnail.getWidth());
+        imageData.setThumbnailHeight(compressedThumbnail.getHeight());
+
+
+        imageData.setLargeImagePath(compressedLargeImage.getPath());
+        imageData.setLargeImageName(compressedLargeImage.getFilename());
+        imageData.setLargeImageSize(compressedLargeImage.getSize());
+        imageData.setLargeImageWidth(compressedLargeImage.getWidth());
+        imageData.setLargeImageHeight(compressedLargeImage.getHeight());
+
+        if (compressedOriginImage != null) {
+            imageData.setOriginImagePath(compressedOriginImage.getPath());
+            imageData.setOriginImageName(compressedOriginImage.getFilename());
+            imageData.setOriginImageSize(compressedOriginImage.getSize());
+            imageData.setOriginImageWidth(compressedOriginImage.getWidth());
+            imageData.setOriginImageHeight(compressedOriginImage.getHeight());
+        }
+
+        return Utils.getImageWritableMap(imageData);
     }
 
+    /**
+     * 获取照片选择的结果,只返回缩率图
+     */
     private void getAsyncSelection(final Activity activity, Uri uri, boolean isCamera) throws Exception {
         String path = resolveRealPath(activity, uri, isCamera);
         if (path == null || path.isEmpty()) {
@@ -512,11 +557,25 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
 
         String mime = getMimeType(path);
         if (mime != null && mime.startsWith("video/")) {
-            getVideo(activity, path, mime);
             return;
         }
 
-        resultCollector.notifySuccessImage(getImageData(path));
+        Integer thumbnailWidth = options.hasKey("thumbnailWidth") ? options.getInt("thumbnailWidth") : 300;
+        Integer thumbnailHeight = options.hasKey("thumbnailHeight") ? options.getInt("thumbnailHeight") : 300;
+        Double thumbnailQuality = options.hasKey("thumbnailQuality") ? options.getDouble("thumbnailQuality") : 0.8;
+        CompressedImage compressedImage = getImageData(path, thumbnailWidth, thumbnailHeight, thumbnailQuality);
+
+        ImageData thumbnailImageData = new ImageData(
+                uri.getPath(),
+                compressedImage.getMime(),
+                compressedImage.getModificationDate());
+        thumbnailImageData.setThumbnailPath(compressedImage.getPath());
+        thumbnailImageData.setThumbnailName(compressedImage.getFilename());
+        thumbnailImageData.setThumbnailWidth(compressedImage.getWidth());
+        thumbnailImageData.setThumbnailHeight(compressedImage.getHeight());
+        thumbnailImageData.setThumbnailSize(compressedImage.getSize());
+
+        resultCollector.notifySuccessImage(thumbnailImageData);
     }
 
     private Bitmap validateVideo(Uri uri) throws Exception {
@@ -691,60 +750,13 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
         return options;
     }
 
-    private WritableMap getImage(final Activity activity, String path) throws Exception {
-        WritableMap image = new WritableNativeMap();
-
-        if (path.startsWith("http://") || path.startsWith("https://")) {
-            throw new Exception("Cannot select remote files");
-        }
-        BitmapFactory.Options original = validateImage(path);
-        ExifInterface originalExif = new ExifInterface(path);
-        int orientation = originalExif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1);
-        boolean invertDimensions = (
-                orientation == ExifInterface.ORIENTATION_ROTATE_90 ||
-                        orientation == ExifInterface.ORIENTATION_ROTATE_270 ||
-                        orientation == ExifInterface.ORIENTATION_TRANSPOSE ||
-                        orientation == ExifInterface.ORIENTATION_TRANSVERSE
-        );
-
-
-        // if compression options are provided image will be compressed. If none options is provided,
-        // then original image will be returned
-        File compressedImage = compression.compressImage(this.reactContext, options, path, original);
-        String compressedImagePath = compressedImage.getPath();
-        BitmapFactory.Options options = validateImage(compressedImagePath);
-        long modificationDate = new File(path).lastModified();
-
-        image.putString("path", "file://" + compressedImagePath);
-        image.putInt("width", invertDimensions ? options.outHeight : options.outWidth);
-        image.putInt("height", invertDimensions ? options.outWidth : options.outHeight);
-        image.putString("mime", options.outMimeType);
-        image.putInt("size", (int) new File(compressedImagePath).length());
-        image.putString("modificationDate", String.valueOf(modificationDate));
-        image.putString("filename", new File(path).getName());
-
-        if (includeBase64) {
-            image.putString("data", getBase64StringFromFile(compressedImagePath));
-        }
-
-        if (includeExif) {
-            try {
-                WritableMap exif = ExifExtractor.extract(path);
-                image.putMap("exif", exif);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-
-        return image;
-    }
 
     /**
      * 压缩并返回压缩后的图片对象信息
      * @param path 图片的路径，该路径是一个缓存区的临时路径
-     * @return ImageData
+     * @return CompressedImage
      */
-    private ImageData getImageData(String path) throws Exception {
+    private CompressedImage getImageData(String path, Integer width, Integer height, Double quality) throws Exception {
 
         if (path.startsWith("http://") || path.startsWith("https://")) {
             throw new Exception("Cannot select remote files");
@@ -762,20 +774,21 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
 
         // if compression options are provided image will be compressed. If none options is provided,
         // then original image will be returned
-        File compressedImage = compression.compressImage(this.reactContext, options, path, original);
+        File compressedImage = compression.compressImage(this.reactContext, width,height, quality, path, original);
         String compressedImagePath = compressedImage.getPath();
         BitmapFactory.Options options = validateImage(compressedImagePath);
         long modificationDate = new File(path).lastModified();
+        Log.i("pickerModule mediaUri:", path);
 
-        return new ImageData(
+        return new CompressedImage(
                 "file://" + compressedImagePath,
-                invertDimensions ? options.outHeight : options.outWidth,
-                invertDimensions ? options.outWidth : options.outHeight,
+                new File(compressedImagePath).getName(),
                 options.outMimeType,
-                (int) new File(compressedImagePath).length(),
                 String.valueOf(modificationDate),
-                new File(path).getName()
-        );
+                (int) new File(compressedImagePath).length(),
+                options.outWidth,
+                options.outHeight
+                );
     }
 
     private void configureCropperColors(UCrop.Options options) {

@@ -369,6 +369,80 @@ declare module "react-native-image-crop-picker" {
 
     export type Options = AnyOptions | VideoOptions | ImageOptions;
 
+
+    /**
+     * 直接拍照时，直接生成三种图片信息
+     */
+    export type OpenCameraOptions = ImageOptions & {
+        thumbnailWidth?: number; // 缩率图宽度
+        thumbnailHeight?: number; // 缩率图高度
+        thumbnailQuality?: number; // 缩率图质量
+
+        largeImageWidth?: number; // 大图宽度
+        largeImageHeight?: number; // 大图高度
+        largeImageQuality?: number; // 大图质量
+
+        keepOriginImage?: boolean; // 是否保留原图
+        originImageWidth?: number; // 原图宽度
+        originImageHeight?: number; // 原图高度
+        originImageQuality?: number; // 原图质量
+    };
+
+    /**
+     * 选择图片时，只生成缩略图信息
+     */
+    export type OpenPickerOptions =  ImageOptions & {
+        thumbnailWidth?: number; // 缩率图宽度
+        thumbnailHeight?: number; // 缩率图高度
+        thumbnailQuality?: number; // 缩率图质量
+    };
+
+    /**
+     * 压缩图片时，生成大图和原图信息
+     */
+    export type CompressImageOptions = ImageOptions & {
+        originImagePaths: string[];
+
+        largeImageWidth?: number; // 大图宽度
+        largeImageHeight?: number; // 大图高度
+        largeImageQuality?: number; // 大图质量
+
+        keepOriginImage?: boolean; // 是否保留原图
+        originImageQuality?: number; // 原图质量
+        originImageWidth?: number; // 原图宽度
+        originImageHeight?: number; // 原图高度
+    };
+
+    /**
+     * 返回结果:压缩后的图片信息
+     */
+    export type CompressedImage =  {
+        mime?: string;
+        modificationDate?: string;
+
+        // 选择图片Uri：/picker/0/com.android.providers.media.photopicker/media/1000015565
+        // 拍照图片Uri：/external_files/Android/data/com.grapecity.leyserkids.teacher/files/Pictures/image-cffe3aa1-711e-46bf-9b19-05b59d1f1dd46039662563402116300.jpg
+        mediaUri?: string; // 原图路径
+
+        thumbnailPath: string; // 缩略图路径 file:///storage/emulated/0/Android/data/com.grapecity.leyserkids.teacher/files/Pictures/31ef00db-1280-4cd8-addc-167d189033f8.jpg
+        thumbnailName: string; // 缩略图名称
+        thumbnailSize: number; // 缩略图大小
+        thumbnailWidth: number; // 缩略图宽度
+        thumbnailHeight: number; // 缩略图高度
+
+        largeImagePath?: string; // 大图路径
+        largeImageName?: string; // 大图名称
+        largeImageSize?: number; // 大图大小
+        largeImageWidth?: number; // 大图宽度
+        largeImageHeight?: number; // 大图高度
+
+        originImagePath?: string; // 原图路径
+        originImageName?: string; // 原图名称
+        originImageSize?: number; // 原图大小
+        originImageWidth?: number; // 原图宽度
+        originImageHeight?: number; // 原图高度
+    };
+
     interface ImageVideoCommon {
         /**
          * Selected image location. This is null when the `writeTempFile` option is set to `false`.
@@ -492,15 +566,16 @@ declare module "react-native-image-crop-picker" {
         O extends { mediaType: 'video'; } ? Video :
         ImageOrVideo;
 
-    export function openPicker<O extends Options>(options: O): Promise<PossibleArray<O, MediaType<O>>>;
-    export function openCamera<O extends Options>(options: O): Promise<PossibleArray<O, MediaType<O>>>;
-    export function openCropper(options: CropperOptions): Promise<Image>;
+    export function openPicker<O extends OpenPickerOptions>(options: O): Promise<CompressedImage[]>;
+    export function openCamera<O extends OpenCameraOptions>(options: O): Promise<PossibleArray<O, CompressedImage<O>>>;
+    export function openCropper(options: CropperOptions): Promise<CompressedImage>;
     export function clean(): Promise<void>;
     export function cleanSingle(path: string): Promise<void>;
 
     export interface ImageCropPicker {
-        openPicker<O extends Options>(options: O): Promise<PossibleArray<O, MediaType<O>>>;
-        openCamera<O extends Options>(options: O): Promise<PossibleArray<O, MediaType<O>>>;
+        openPicker<O extends OpenPickerOptions>(options: O): Promise<CompressedImage[]>;
+        openCamera<O extends OpenCameraOptions>(options: O): Promise<CompressedImage>;
+        compressImage<O extends CompressImageOptions>(options: O): Promise<PossibleArray<O, CompressedImage<O>>>;
         openCropper(options: CropperOptions): Promise<Image>;
         clean(): Promise<void>;
         cleanSingle(path: string): Promise<void>;
@@ -521,12 +596,12 @@ declare module "react-native-image-crop-picker" {
 
         addListener(
             eventType: 'onSingleCompressionComplete',
-            listener: (event: { image: Image }) => void
+            listener: (event: { image: CompressedImage }) => void
         ): EventListener;
 
         addListener(
             eventType: 'onAllCompressionComplete',
-            listener: (event: { images: Image[] }) => void
+            listener: (event: { images: CompressedImage[] }) => void
         ): EventListener;
 
         addListener(

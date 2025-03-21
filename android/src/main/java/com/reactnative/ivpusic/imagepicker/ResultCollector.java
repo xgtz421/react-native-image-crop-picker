@@ -9,7 +9,6 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeArray;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -26,7 +25,7 @@ class ResultCollector {
     private boolean resultSent;
 
     // 图片数据列表
-    private final ArrayList<ImageData> imageDataList = new ArrayList<ImageData>();
+    private final ArrayList<ImageData> imageDataList = new ArrayList<>();
 
     // React 上下文
     private ReactApplicationContext reactContext;

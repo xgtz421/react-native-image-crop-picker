@@ -10,14 +10,28 @@ import java.util.ArrayList;
 public class Utils {
     public static WritableMap getImageWritableMap(ImageData imageData) {
         WritableMap image = new WritableNativeMap();
-
-        image.putString("path", imageData.getPath());
-        image.putInt("width", imageData.getWidth());
-        image.putInt("height", imageData.getHeight());
         image.putString("mime", imageData.getMime());
-        image.putInt("size", imageData.getSize());
         image.putString("modificationDate", imageData.getModificationDate());
-        image.putString("filename", imageData.getFilename());
+
+        image.putString("mediaUri", imageData.getMediaUri());
+
+        image.putString("thumbnailPath", imageData.getThumbnailPath());
+        image.putString("thumbnailName", imageData.getThumbnailName());
+        image.putInt("thumbnailSize", imageData.getThumbnailSize());
+        image.putInt("thumbnailWidth", imageData.getThumbnailWidth());
+        image.putInt("thumbnailHeight", imageData.getThumbnailHeight());
+
+        image.putString("largeImagePath", imageData.getLargeImagePath());
+        image.putString("largeImageName", imageData.getLargeImageName());
+        image.putInt("largeImageSize", imageData.getLargeImageSize());
+        image.putInt("largeImageWidth", imageData.getLargeImageWidth());
+        image.putInt("largeImageHeight", imageData.getLargeImageHeight());
+
+        image.putString("originImagePath", imageData.getOriginImagePath());
+        image.putString("originImageName", imageData.getOriginImageName());
+        image.putInt("originImageSize", imageData.getOriginImageSize());
+        image.putInt("originImageWidth", imageData.getOriginImageWidth());
+        image.putInt("originImageHeight", imageData.getOriginImageHeight());
 
         return image;
     }

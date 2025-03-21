@@ -3,57 +3,42 @@ package com.reactnative.ivpusic.imagepicker;
 import java.util.Map;
 
 public class ImageData {
-    private String path;
-    private int width;
-    private int height;
+    private String mediaUri;;
     private String mime;
-    private int size;
     private String modificationDate;
-    private String filename;
-    private String base64Data;
-    private Map<String, Object> exifData;
+
+    private String thumbnailPath;
+    private String thumbnailName;
+    private int thumbnailSize;
+    private int thumbnailWidth;
+    private int thumbnailHeight;
+
+    private String largeImagePath;
+    private String largeImageName;
+    private int largeImageSize;
+    private int largeImageWidth;
+    private int largeImageHeight;
+
+    private String originImagePath;
+    private String originImageName;
+    private int originImageSize;
+    private int originImageWidth;
+    private int originImageHeight;
 
     // Constructor with exifData as an optional parameter
-    public ImageData(String path, int width, int height, String mime, int size, String modificationDate, String filename, Map<String, Object> exifData) {
-        this.path = path;
-        this.width = width;
-        this.height = height;
+    public ImageData(String mediaUri, String mime, String modificationDate) {
+        this.mediaUri = mediaUri;
         this.mime = mime;
-        this.size = size;
         this.modificationDate = modificationDate;
-        this.filename = filename;
-        this.base64Data = null; // Initialize base64Data as null by default
-        this.exifData = exifData; // exifData can be null
-    }
-
-    // Overloaded constructor without exifData
-    public ImageData(String path, int width, int height, String mime, int size, String modificationDate, String filename) {
-        this(path, width, height, mime, size, modificationDate, filename, null);
     }
 
     // Getters and setters
-    public String getPath() {
-        return path;
+    public String getMediaUri() {
+        return mediaUri;
     }
 
-    public void setPath(String path) {
-        this.path = path;
-    }
-
-    public int getWidth() {
-        return width;
-    }
-
-    public void setWidth(int width) {
-        this.width = width;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
+    public void setMediaUri(String mediaUri) {
+        this.mediaUri = mediaUri;
     }
 
     public String getMime() {
@@ -64,14 +49,6 @@ public class ImageData {
         this.mime = mime;
     }
 
-    public int getSize() {
-        return size;
-    }
-
-    public void setSize(int size) {
-        this.size = size;
-    }
-
     public String getModificationDate() {
         return modificationDate;
     }
@@ -80,27 +57,123 @@ public class ImageData {
         this.modificationDate = modificationDate;
     }
 
-    public String getFilename() {
-        return filename;
+    public String getThumbnailPath() {
+        return thumbnailPath;
     }
 
-    public void setFilename(String filename) {
-        this.filename = filename;
+    public void setThumbnailPath(String thumbnailPath) {
+        this.thumbnailPath = thumbnailPath;
     }
 
-    public String getBase64Data() {
-        return base64Data;
+    public String getThumbnailName() {
+        return thumbnailName;
     }
 
-    public void setBase64Data(String base64Data) {
-        this.base64Data = base64Data;
+    public void setThumbnailName(String thumbnailName) {
+        this.thumbnailName = thumbnailName;
     }
 
-    public Map<String, Object> getExifData() {
-        return exifData;
+    public int getThumbnailSize() {
+        return thumbnailSize;
     }
 
-    public void setExifData(Map<String, Object> exifData) {
-        this.exifData = exifData;
+    public void setThumbnailSize(int thumbnailSize) {
+        this.thumbnailSize = thumbnailSize;
+    }
+
+    public int getThumbnailWidth() {
+        return thumbnailWidth;
+    }
+
+    public void setThumbnailWidth(int thumbnailWidth) {
+        this.thumbnailWidth = thumbnailWidth;
+    }
+
+    public int getThumbnailHeight() {
+        return thumbnailHeight;
+    }
+
+    public void setThumbnailHeight(int thumbnailHeight) {
+        this.thumbnailHeight = thumbnailHeight;
+    }
+
+    public String getLargeImagePath() {
+        return largeImagePath;
+    }
+
+    public void setLargeImagePath(String largeImagePath) {
+        this.largeImagePath = largeImagePath;
+    }
+
+    public String getLargeImageName() {
+        return largeImageName;
+    }
+
+    public void setLargeImageName(String largeImageName) {
+        this.largeImageName = largeImageName;
+    }
+
+    public int getLargeImageSize() {
+        return largeImageSize;
+    }
+
+    public void setLargeImageSize(int largeImageSize) {
+        this.largeImageSize = largeImageSize;
+    }
+
+    public int getLargeImageWidth() {
+        return largeImageWidth;
+    }
+
+    public void setLargeImageWidth(int largeImageWidth) {
+        this.largeImageWidth = largeImageWidth;
+    }
+
+    public int getLargeImageHeight() {
+        return largeImageHeight;
+    }
+
+    public void setLargeImageHeight(int largeImageHeight) {
+        this.largeImageHeight = largeImageHeight;
+    }
+
+    public String getOriginImagePath() {
+        return originImagePath;
+    }
+
+    public void setOriginImagePath(String originImagePath) {
+        this.originImagePath = originImagePath;
+    }
+
+    public String getOriginImageName() {
+        return originImageName;
+    }
+
+    public void setOriginImageName(String originImageName) {
+        this.originImageName = originImageName;
+    }
+
+    public int getOriginImageSize() {
+        return originImageSize;
+    }
+
+    public void setOriginImageSize(int originImageSize) {
+        this.originImageSize = originImageSize;
+    }
+
+    public int getOriginImageWidth() {
+        return originImageWidth;
+    }
+
+    public void setOriginImageWidth(int originImageWidth) {
+        this.originImageWidth = originImageWidth;
+    }
+
+    public int getOriginImageHeight() {
+        return originImageHeight;
+    }
+
+    public void setOriginImageHeight(int originImageHeight) {
+        this.originImageHeight = originImageHeight;
     }
 }

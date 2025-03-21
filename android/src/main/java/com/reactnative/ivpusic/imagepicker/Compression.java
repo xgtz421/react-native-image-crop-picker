@@ -105,27 +105,31 @@ class Compression {
                 && !orientation.equals(String.valueOf(ExifInterface.ORIENTATION_UNDEFINED));
     }
 
-    File compressImage(final Context context, final ReadableMap options, final String originalImagePath, final BitmapFactory.Options bitmapOptions) throws IOException,OutOfMemoryError {
-        Integer maxWidth = options.hasKey("compressImageMaxWidth") ? options.getInt("compressImageMaxWidth") : null;
-        Integer maxHeight = options.hasKey("compressImageMaxHeight") ? options.getInt("compressImageMaxHeight") : null;
-        Double quality = options.hasKey("compressImageQuality") ? options.getDouble("compressImageQuality") : null;
+    File compressImage(final Context context,
+                       final Integer width,
+                       final Integer height,
+                       final Double quality,
+                       final String originalImagePath,
+                       final BitmapFactory.Options bitmapOptions) throws IOException,OutOfMemoryError {
+        Integer maxWidth = width;
+        Integer maxHeight = height;
 
-        boolean isLossLess = (quality == null || quality == 1.0);
+        boolean isLossLess = quality == 1.0;
         boolean useOriginalWidth = (maxWidth == null || maxWidth >= bitmapOptions.outWidth);
         boolean useOriginalHeight = (maxHeight == null || maxHeight >= bitmapOptions.outHeight);
 
         List knownMimes = Arrays.asList("image/jpeg", "image/jpg", "image/png", "image/gif", "image/tiff");
         boolean isKnownMimeType = (bitmapOptions.outMimeType != null && knownMimes.contains(bitmapOptions.outMimeType.toLowerCase()));
 
+        // 如果压缩质量为1或要压缩的宽高大于等于原图高度则不进行压缩
         if (isLossLess && useOriginalWidth && useOriginalHeight && isKnownMimeType) {
             Log.d("image-crop-picker", "Skipping image compression");
             return new File(originalImagePath);
         }
 
         Log.d("image-crop-picker", "Image compression activated");
-
         // compression quality
-        int targetQuality = quality != null ? (int) (quality * 100) : 100;
+        int targetQuality = (int) (quality * 100);
         Log.d("image-crop-picker", "Compressing image with quality " + targetQuality);
 
         if (maxWidth == null) maxWidth = bitmapOptions.outWidth;
