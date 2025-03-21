@@ -349,6 +349,8 @@ declare module "react-native-image-crop-picker" {
          * Selected image location
          */
         path: string;
+
+        keepOriginImage?: boolean; // 是否保留原图
     }
 
     type VideoOptions = CommonOptions & {
@@ -577,7 +579,7 @@ declare module "react-native-image-crop-picker" {
         openPicker(options: OpenPickerOptions): Promise<CompressedImage[]>;
         openCamera(options: OpenCameraOptions): Promise<CompressedImage>;
         compressImage(options: CompressImageOptions): Promise<CompressedImage[]>;
-        openCropper(options: CropperOptions): Promise<Image>;
+        openCropper(options: CropperOptions): Promise<CompressedImage>;
         clean(): Promise<void>;
         cleanSingle(path: string): Promise<void>;
     }

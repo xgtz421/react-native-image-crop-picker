@@ -457,7 +457,6 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
 
                     for (String mediaUri : mediaUriList) {
                         Uri uri = Uri.parse(mediaUri);
-                        Log.i("22222", uri.getPath() + ":" + mediaUri);
                         getAsyncCompressSelection(activity, uri);
                     }
                 } catch (Exception ex) {
