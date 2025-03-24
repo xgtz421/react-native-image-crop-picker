@@ -452,7 +452,7 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
                     ArrayList<String> mediaUriList = getMediaUriList(options);
                     int itemCount = mediaUriList.size();
                     // 发送开始压缩的事件
-                    SendEventService.sendBatchCompressStartEvent(reactContext, itemCount);
+                    SendEventService.sendLargeImageGenerationStartEvent(reactContext, itemCount);
                     resultCollector.setWaitCount(itemCount);
 
                     for (String mediaUri : mediaUriList) {
@@ -461,7 +461,7 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
                     }
                 } catch (Exception ex) {
                     // 发送压缩失败的事件
-                    SendEventService.sendCompressionErrorEvent(reactContext, ex.getMessage());
+                    SendEventService.sendCropPickerErrorEvent(reactContext, ex.getMessage());
                     resultCollector.notifyProblem(E_NO_IMAGE_DATA_FOUND, ex.getMessage());
                 }
             }).start();
@@ -518,7 +518,7 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
         }
 
         ImageData imageData = new ImageData(
-                uri.getPath(),
+                uri.toString(),
                 compressedLargeImage.getMime(),
                 compressedLargeImage.getModificationDate());
 
@@ -855,12 +855,12 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
                                 if (clipData == null) {
                                     resultCollector.setWaitCount(1);
                                     // 发送开始压缩的事件
-                                    SendEventService.sendCompressionStartEvent(reactContext, 1);
+                                    SendEventService.sendThumbnailGenerationStartEvent(reactContext, 1);
                                     getAsyncSelection(activity, data.getData(), false);
                                 } else {
                                     int itemCount = clipData.getItemCount();
                                     // 发送开始压缩的事件
-                                    SendEventService.sendCompressionStartEvent(reactContext, itemCount);
+                                    SendEventService.sendThumbnailGenerationStartEvent(reactContext, itemCount);
                                     resultCollector.setWaitCount(itemCount);
                                     for (int i = 0; i < clipData.getItemCount(); i++) {
                                         Log.i(PickerModule.tag, String.valueOf(clipData.getItemAt(i).getUri()));
@@ -870,7 +870,7 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
                                 }
                             } catch (Exception ex) {
                                 // 发送压缩失败的事件
-                                SendEventService.sendCompressionErrorEvent(reactContext, ex.getMessage());
+                                SendEventService.sendCropPickerErrorEvent(reactContext, ex.getMessage());
                                 resultCollector.notifyProblem(E_NO_IMAGE_DATA_FOUND, ex.getMessage());
                             }
 
@@ -896,7 +896,7 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
                             } else {
                                 try {
                                     // 发送开始压缩的事件
-                                    SendEventService.sendCompressionStartEvent(reactContext, 1);
+                                    SendEventService.sendThumbnailGenerationStartEvent(reactContext, 1);
                                     getAsyncSelection(activity, uri, false);
                                 } catch (Exception ex) {
                                     resultCollector.notifyProblem(E_NO_IMAGE_DATA_FOUND, ex.getMessage());

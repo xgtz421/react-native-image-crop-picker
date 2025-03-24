@@ -96,11 +96,11 @@ class ResultCollector {
         // 缓存图片数据
         imageDataList.add(imageData);
         // 将单张照片信息发送到JS端
-        SendEventService.sendSingleCompressionCompleteEvent(reactContext, imageData);
+        SendEventService.sendSingleLargeImageCompleteEvent(reactContext, imageData);
         int currentCount = waitCounter.addAndGet(1);
         if (currentCount == waitCount) {
             // 将所有的照片信息发送到JS端
-            SendEventService.sendBatchCompressionCompleteEvent(reactContext, imageDataList);
+            SendEventService.sendAllLargeImageCompleteEvent(reactContext, imageDataList);
             // 选择照片的promise
             promise.resolve(Utils.getImageWritableArray(imageDataList));
             resultSent = true;
@@ -114,20 +114,20 @@ class ResultCollector {
             // 缓存图片数据
             imageDataList.add(imageData);
             // 将单张照片信息发送到JS端
-            SendEventService.sendSingleCompressionCompleteEvent(reactContext, imageData);
+            SendEventService.sendSingleThumbnailCompleteEvent(reactContext, imageData);
             int currentCount = waitCounter.addAndGet(1);
             if (currentCount == waitCount) {
                 // 将所有的照片信息发送到JS端
-                SendEventService.sendAllCompressionCompleteEvent(reactContext, imageDataList);
+                SendEventService.sendAllThumbnailsCompleteEvent(reactContext, imageDataList);
                 // 选择照片的promise
                 promise.resolve(Utils.getImageWritableArray(imageDataList));
                 resultSent = true;
             }
         } else {
             // 将单张照片信息发送到JS端
-            SendEventService.sendSingleCompressionCompleteEvent(reactContext, imageData);
+            SendEventService.sendSingleThumbnailCompleteEvent(reactContext, imageData);
             // 将所有的照片信息发送到JS端
-            SendEventService.sendAllCompressionCompleteEvent(reactContext, (ArrayList<ImageData>) Collections.singletonList(imageData));
+            SendEventService.sendAllThumbnailsCompleteEvent(reactContext, (ArrayList<ImageData>) Collections.singletonList(imageData));
 
             WritableMap result = Utils.getImageWritableMap(imageData);
             promise.resolve(result);

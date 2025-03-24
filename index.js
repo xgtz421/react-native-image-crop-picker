@@ -7,10 +7,13 @@ const ImageCropPicker = NativeModules.ImageCropPicker;
 const eventEmitter = new NativeEventEmitter(ImageCropPicker);
 
 // 导出事件监听器添加/移除函数
-export const addCompressionStartListener = (callback) => eventEmitter.addListener('onCompressionStart', callback);
-export const addSingleCompressionCompleteListener = (callback) => eventEmitter.addListener('onSingleCompressionComplete', callback);
-export const addAllCompressionCompleteListener = (callback) => eventEmitter.addListener('onAllCompressionComplete', callback);
-export const addCompressionErrorListener = (callback) => eventEmitter.addListener('onCompressionError', callback);
+export const addThumbnailGenerateStartListener = (callback) => eventEmitter.addListener('onThumbnailGenerationStart', callback);
+export const addSingleThumbnailCompleteListener = (callback) => eventEmitter.addListener('onSingleThumbnailComplete', callback);
+export const addAllThumbnailsCompleteListener = (callback) => eventEmitter.addListener('onAllThumbnailsComplete', callback);
+export const addLargeImageGenerateStartListener = (callback) => eventEmitter.addListener('onLargeImageGenerationStart', callback);
+export const addSingleLargeImageCompleteListener = (callback) => eventEmitter.addListener('onSingleLargeImageComplete', callback);
+export const addAllLargeImageCompleteListener = (callback) => eventEmitter.addListener('onAllLargeImageComplete', callback);
+export const addCropPickerErrorListener = (callback) => eventEmitter.addListener('onCropPickerError', callback);
 export const removeEventListener = (listener) => listener.remove();
 
 export default ImageCropPicker;

@@ -415,6 +415,8 @@ declare module "react-native-image-crop-picker" {
         originImageHeight?: number; // 原图高度
     };
 
+   
+
     /**
      * 返回结果:压缩后的图片信息
      */
@@ -592,23 +594,45 @@ declare module "react-native-image-crop-picker" {
         remove: () => void;
     };
     export type ImageCropPickerEventEmitter = NativeEventEmitter & {
+        // 开始生成缩略图
         addListener(
-            eventType: 'onCompressionStart',
+            eventType: 'onThumbnailGenerationStart',
             listener: (event: { total: number }) => void
         ): EventListener;
 
+        // 单个缩略图生成完成
         addListener(
-            eventType: 'onSingleCompressionComplete',
+            eventType: 'onSingleThumbnailComplete',
             listener: (event: { image: CompressedImage }) => void
         ): EventListener;
 
+        // 所有缩略图生成完成
         addListener(
-            eventType: 'onAllCompressionComplete',
+            eventType: 'onAllThumbnailsComplete',
             listener: (event: { images: CompressedImage[] }) => void
         ): EventListener;
 
+         // 开始生成大图
+         addListener(
+            eventType: 'onLargeImageGenerationStart',
+            listener: (event: { total: number }) => void
+        ): EventListener;
+
+        // 单个大图生成完成
         addListener(
-            eventType: 'onCompressionError',
+            eventType: 'onSingleLargeImageComplete',
+            listener: (event: { image: CompressedImage }) => void
+        ): EventListener;
+
+        // 所有大图生成完成
+        addListener(
+            eventType: 'onAllLargeImageComplete',
+            listener: (event: { images: CompressedImage[] }) => void
+        ): EventListener;
+
+        // 生成缩略图或压缩大图失败的事件
+        addListener(
+            eventType: 'onCropPickerError',
             listener: (event: { error: Error }) => void
         ): EventListener;
     }

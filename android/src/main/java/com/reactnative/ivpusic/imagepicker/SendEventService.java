@@ -10,53 +10,55 @@ import java.util.ArrayList;
 
 public class SendEventService {
 
-    public static void sendBatchCompressStartEvent(ReactContext reactContext, int total) {
+
+
+    // 发送开始生成缩略图的事件
+    public static void sendThumbnailGenerationStartEvent(ReactContext reactContext, int total) {
         WritableMap params = Arguments.createMap();
         params.putInt("total", total);
-        sendEvent(reactContext, "onBatchCompressionStart", params);
+        sendEvent(reactContext, "onThumbnailGenerationStart", params);
     }
 
-    public static void sendBatchCompressionCompleteEvent(ReactContext reactContext, ArrayList<ImageData> imageDataList) {
-        WritableMap params = Arguments.createMap();
-        params.putArray("images", Utils.getImageWritableArray(imageDataList));
-        sendEvent(reactContext, "onBatchCompressionComplete", params);
-    }
-
-    public static void sendCompressionStartEvent(ReactContext reactContext, int total) {
-        WritableMap params = Arguments.createMap();
-        params.putInt("total", total);
-        sendEvent(reactContext, "onCompressionStart", params);
-    }
-
-
-    public static void sendSingleCompressionCompleteEvent(ReactContext reactContext, ImageData imageData) {
+    // 发送单个缩略图生成完成的事件
+    public static void sendSingleThumbnailCompleteEvent(ReactContext reactContext, ImageData imageData) {
         WritableMap params = Arguments.createMap();
         params.putMap("image", Utils.getImageWritableMap(imageData));
-        sendEvent(reactContext, "onSingleCompressionComplete", params);
+        sendEvent(reactContext, "onSingleThumbnailComplete", params);
     }
 
-    /**
-     * 发送一个事件，表示所有压缩任务已完成。
-     *
-     * @param reactContext React 上下文
-     * @param imageDataList 照片信息列表
-     */
-    public static void sendAllCompressionCompleteEvent(ReactContext reactContext, ArrayList<ImageData> imageDataList) {
+    // 发送所有缩略图生成完成的事件
+    public static void sendAllThumbnailsCompleteEvent(ReactContext reactContext, ArrayList<ImageData> imageDataList) {
         WritableMap params = Arguments.createMap();
         params.putArray("images", Utils.getImageWritableArray(imageDataList));
-        sendEvent(reactContext, "onAllCompressionComplete", params);
+        sendEvent(reactContext, "onAllThumbnailsComplete", params);
     }
 
-    /**
-     * 发送一个事件，表示压缩过程发生错误。
-     *
-     * @param reactContext React 上下文
-     * @param message 错误信息
-     */
-    public static void sendCompressionErrorEvent(ReactContext reactContext, String message) {
+    // 发送开始生成大图的事件
+    public static void sendLargeImageGenerationStartEvent(ReactContext reactContext, int total) {
+        WritableMap params = Arguments.createMap();
+        params.putInt("total", total);
+        sendEvent(reactContext, "onLargeImageGenerationStart", params);
+    }
+
+    // 发送单个大图生成完成的事件
+    public static void sendSingleLargeImageCompleteEvent(ReactContext reactContext, ImageData imageData) {
+        WritableMap params = Arguments.createMap();
+        params.putMap("image", Utils.getImageWritableMap(imageData));
+        sendEvent(reactContext, "onSingleLargeImageComplete", params);
+    }
+
+    // 发送所有大图生成完成的事件
+    public static void sendAllLargeImageCompleteEvent(ReactContext reactContext, ArrayList<ImageData> imageDataList) {
+        WritableMap params = Arguments.createMap();
+        params.putArray("images", Utils.getImageWritableArray(imageDataList));
+        sendEvent(reactContext, "onAllLargeImageComplete", params);
+    }
+
+    // 发送生成缩略图或大图发送错误的事件
+    public static void sendCropPickerErrorEvent(ReactContext reactContext, String message) {
         WritableMap params = Arguments.createMap();
         params.putString("message", message);
-        sendEvent(reactContext, "onCompressionError", params);
+        sendEvent(reactContext, "onCropPickerError", params);
     }
 
     /**
