@@ -1,8 +1,6 @@
-package com.reactnative.ivpusic.imagepicker;
+package com.reactnative.ivpusic.imagepicker.dto;
 
-import java.util.Map;
-
-public class ImageData {
+public class FullImage {
     private String mediaUri;;
     private String mime;
     private String modificationDate;
@@ -26,7 +24,7 @@ public class ImageData {
     private int originImageHeight;
 
     // Constructor with exifData as an optional parameter
-    public ImageData(String mediaUri, String mime, String modificationDate) {
+    public FullImage(String mediaUri, String mime, String modificationDate) {
         this.mediaUri = mediaUri;
         this.mime = mime;
         this.modificationDate = modificationDate;

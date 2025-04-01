@@ -1,14 +1,16 @@
-package com.reactnative.ivpusic.imagepicker;
+package com.reactnative.ivpusic.imagepicker.ext;
+
 
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeArray;
 import com.facebook.react.bridge.WritableNativeMap;
+import com.reactnative.ivpusic.imagepicker.dto.FullImage;
 
 import java.util.ArrayList;
 
-public class Utils {
-    public static WritableMap getImageWritableMap(ImageData imageData) {
+public class WritableMapUtil {
+    public static WritableMap convertSingleImageToWritableMap(FullImage imageData) {
         WritableMap image = new WritableNativeMap();
         image.putString("mime", imageData.getMime());
         image.putString("modificationDate", imageData.getModificationDate());
@@ -36,10 +38,10 @@ public class Utils {
         return image;
     }
 
-    public static WritableArray getImageWritableArray(ArrayList<ImageData> imageDataList) {
+    public static WritableArray convertImageListToWritableArray(ArrayList<FullImage> imageDataList) {
         WritableArray arrayResult = new WritableNativeArray();
         imageDataList.forEach(imageData -> {
-            WritableMap imageMap = getImageWritableMap(imageData);
+            WritableMap imageMap = convertSingleImageToWritableMap(imageData);
             arrayResult.pushMap(imageMap);
         });
         return  arrayResult;
