@@ -5,12 +5,13 @@ import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.Arguments;
-import com.reactnative.ivpusic.imagepicker.dto.FullImage;
-import com.reactnative.ivpusic.imagepicker.ext.WritableMapUtil;
 
 import java.util.ArrayList;
 
 public class SendEventService {
+
+
+
     // 发送开始生成缩略图的事件
     public static void sendThumbnailGenerationStartEvent(ReactContext reactContext, int total) {
         WritableMap params = Arguments.createMap();
@@ -19,16 +20,16 @@ public class SendEventService {
     }
 
     // 发送单个缩略图生成完成的事件
-    public static void sendSingleThumbnailCompleteEvent(ReactContext reactContext, FullImage imageData) {
+    public static void sendSingleThumbnailCompleteEvent(ReactContext reactContext, ImageData imageData) {
         WritableMap params = Arguments.createMap();
-        params.putMap("image", WritableMapUtil.convertSingleImageToWritableMap(imageData));
+        params.putMap("image", Utils.getImageWritableMap(imageData));
         sendEvent(reactContext, "onSingleThumbnailComplete", params);
     }
 
     // 发送所有缩略图生成完成的事件
-    public static void sendAllThumbnailsCompleteEvent(ReactContext reactContext, ArrayList<FullImage> imageDataList) {
+    public static void sendAllThumbnailsCompleteEvent(ReactContext reactContext, ArrayList<ImageData> imageDataList) {
         WritableMap params = Arguments.createMap();
-        params.putArray("images", WritableMapUtil.convertImageListToWritableArray(imageDataList));
+        params.putArray("images", Utils.getImageWritableArray(imageDataList));
         sendEvent(reactContext, "onAllThumbnailsComplete", params);
     }
 
@@ -40,16 +41,16 @@ public class SendEventService {
     }
 
     // 发送单个大图生成完成的事件
-    public static void sendSingleLargeImageCompleteEvent(ReactContext reactContext, FullImage imageData) {
+    public static void sendSingleLargeImageCompleteEvent(ReactContext reactContext, ImageData imageData) {
         WritableMap params = Arguments.createMap();
-        params.putMap("image", WritableMapUtil.convertSingleImageToWritableMap(imageData));
+        params.putMap("image", Utils.getImageWritableMap(imageData));
         sendEvent(reactContext, "onSingleLargeImageComplete", params);
     }
 
     // 发送所有大图生成完成的事件
-    public static void sendAllLargeImageCompleteEvent(ReactContext reactContext, ArrayList<FullImage> imageDataList) {
+    public static void sendAllLargeImageCompleteEvent(ReactContext reactContext, ArrayList<ImageData> imageDataList) {
         WritableMap params = Arguments.createMap();
-        params.putArray("images", WritableMapUtil.convertImageListToWritableArray(imageDataList));
+        params.putArray("images", Utils.getImageWritableArray(imageDataList));
         sendEvent(reactContext, "onAllLargeImageComplete", params);
     }
 

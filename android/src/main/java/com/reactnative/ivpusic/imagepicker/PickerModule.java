@@ -21,21 +21,19 @@ import androidx.activity.result.contract.ActivityResultContracts;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
+import androidx.exifinterface.media.ExifInterface;
 
 import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.PermissionAwareActivity;
 import com.facebook.react.modules.core.PermissionListener;
-import com.reactnative.ivpusic.imagepicker.dto.FullImage;
-import com.reactnative.ivpusic.imagepicker.dto.SingleImage;
-import com.reactnative.ivpusic.imagepicker.ext.ReadableMapUtil;
-import com.reactnative.ivpusic.imagepicker.ext.WritableMapUtil;
 import com.yalantis.ucrop.UCrop;
 import com.yalantis.ucrop.UCropActivity;
 
@@ -49,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
@@ -450,7 +449,7 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
         permissionsCheck(activity, promise, Collections.singletonList(Manifest.permission.WRITE_EXTERNAL_STORAGE), () -> {
             new Thread(() -> {
                 try {
-                    ArrayList<String> mediaUriList = ReadableMapUtil.getMediaUriList(options);
+                    ArrayList<String> mediaUriList = getMediaUriList(options);
                     int itemCount = mediaUriList.size();
                     // 发送开始压缩的事件
                     SendEventService.sendLargeImageGenerationStartEvent(reactContext, itemCount);
@@ -469,6 +468,18 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
             return null;
         });
     }
+
+    private ArrayList<String> getMediaUriList(ReadableMap options) {
+        ArrayList<String> mediaUriList = new ArrayList<>();
+        if (options.hasKey("mediaUris")) {
+            ReadableArray mediaUris = options.getArray("mediaUris");
+            for (int i = 0; i < Objects.requireNonNull(mediaUris).size(); i++) {
+                mediaUriList.add(mediaUris.getString(i));
+            }
+        }
+        return mediaUriList;
+    }
+
 
     private String getMimeType(String url) {
         String mimeType = null;
@@ -495,10 +506,10 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
         Integer largeImageWidth = options.hasKey("largeImageWidth") ? options.getInt("largeImageWidth") : 1200;
         Integer largeImageHeight = options.hasKey("largeImageHeight") ? options.getInt("largeImageHeight") : 1200;
         Double largeImageQuality = options.hasKey("largeImageQuality") ? options.getDouble("largeImageQuality") : 0.8;
-        SingleImage compressedLargeImage = getImageData(path, largeImageWidth, largeImageHeight, largeImageQuality);
+        CompressedImage compressedLargeImage = getImageData(path, largeImageWidth, largeImageHeight, largeImageQuality);
 
         boolean keepOriginImage = options.hasKey("keepOriginImage") && options.getBoolean("keepOriginImage");
-        SingleImage compressedOriginImage = null;
+        CompressedImage compressedOriginImage = null;
         if (keepOriginImage) {
             Integer originImageWidth = options.hasKey("originImageWidth") ? options.getInt("originImageWidth") : null;
             Integer originImageHeight = options.hasKey("originImageHeight") ? options.getInt("originImageHeight") : null;
@@ -506,7 +517,7 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
             compressedOriginImage = getImageData(path, originImageWidth, originImageHeight, originImageQuality);
         }
 
-        FullImage imageData = new FullImage(
+        ImageData imageData = new ImageData(
                 uri.toString(),
                 compressedLargeImage.getMime(),
                 compressedLargeImage.getModificationDate());
@@ -546,15 +557,15 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
         Integer thumbnailWidth = options.hasKey("thumbnailWidth") ? options.getInt("thumbnailWidth") : 300;
         Integer thumbnailHeight = options.hasKey("thumbnailHeight") ? options.getInt("thumbnailHeight") : 300;
         Double thumbnailQuality = options.hasKey("thumbnailQuality") ? options.getDouble("thumbnailQuality") : 0.8;
-        SingleImage compressedThumbnail = getImageData(path, thumbnailWidth, thumbnailHeight, thumbnailQuality);
+        CompressedImage compressedThumbnail = getImageData(path, thumbnailWidth, thumbnailHeight, thumbnailQuality);
 
         Integer largeImageWidth = options.hasKey("largeImageWidth") ? options.getInt("largeImageWidth") : 1200;
         Integer largeImageHeight = options.hasKey("largeImageHeight") ? options.getInt("largeImageHeight") : 1200;
         Double largeImageQuality = options.hasKey("largeImageQuality") ? options.getDouble("largeImageQuality") : 0.8;
-        SingleImage compressedLargeImage = getImageData(path, largeImageWidth, largeImageHeight, largeImageQuality);
+        CompressedImage compressedLargeImage = getImageData(path, largeImageWidth, largeImageHeight, largeImageQuality);
 
         boolean keepOriginImage = options.hasKey("keepOriginImage") && options.getBoolean("keepOriginImage");
-        SingleImage compressedOriginImage = null;
+        CompressedImage compressedOriginImage = null;
         if (keepOriginImage) {
             Integer originImageWidth = options.hasKey("originImageWidth") ? options.getInt("originImageWidth") : null;
             Integer originImageHeight = options.hasKey("originImageHeight") ? options.getInt("originImageHeight") : null;
@@ -563,7 +574,7 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
         }
 
 
-        FullImage imageData = new FullImage(
+        ImageData imageData = new ImageData(
                 uri.toString(),
                 compressedThumbnail.getMime(),
                 compressedThumbnail.getModificationDate());
@@ -589,7 +600,7 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
             imageData.setOriginImageHeight(compressedOriginImage.getHeight());
         }
 
-        return WritableMapUtil.convertSingleImageToWritableMap(imageData);
+        return Utils.getImageWritableMap(imageData);
     }
 
     /**
@@ -610,9 +621,9 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
         Integer thumbnailWidth = options.hasKey("thumbnailWidth") ? options.getInt("thumbnailWidth") : 300;
         Integer thumbnailHeight = options.hasKey("thumbnailHeight") ? options.getInt("thumbnailHeight") : 300;
         Double thumbnailQuality = options.hasKey("thumbnailQuality") ? options.getDouble("thumbnailQuality") : 0.8;
-        SingleImage compressedImage = getImageData(path, thumbnailWidth, thumbnailHeight, thumbnailQuality);
+        CompressedImage compressedImage = getImageData(path, thumbnailWidth, thumbnailHeight, thumbnailQuality);
 
-        FullImage thumbnailImageData = new FullImage(
+        ImageData thumbnailImageData = new ImageData(
                 uri.toString(),
                 compressedImage.getMime(),
                 compressedImage.getModificationDate());
@@ -735,11 +746,21 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
      * @param path 图片的路径，该路径是一个缓存区的临时路径
      * @return CompressedImage
      */
-    private SingleImage getImageData(String path, Integer width, Integer height, Double quality) throws Exception {
+    private CompressedImage getImageData(String path, Integer width, Integer height, Double quality) throws Exception {
+
         if (path.startsWith("http://") || path.startsWith("https://")) {
             throw new Exception("Cannot select remote files");
         }
         BitmapFactory.Options original = validateImage(path);
+        ExifInterface originalExif = new ExifInterface(path);
+        int orientation = originalExif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1);
+        boolean invertDimensions = (
+                orientation == ExifInterface.ORIENTATION_ROTATE_90 ||
+                        orientation == ExifInterface.ORIENTATION_ROTATE_270 ||
+                        orientation == ExifInterface.ORIENTATION_TRANSPOSE ||
+                        orientation == ExifInterface.ORIENTATION_TRANSVERSE
+        );
+
 
         // if compression options are provided image will be compressed. If none options is provided,
         // then original image will be returned
@@ -747,8 +768,9 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
         String compressedImagePath = compressedImage.getPath();
         BitmapFactory.Options options = validateImage(compressedImagePath);
         long modificationDate = new File(path).lastModified();
+        Log.i("pickerModule mediaUri:", path);
 
-        return new SingleImage(
+        return new CompressedImage(
                 "file://" + compressedImagePath,
                 new File(compressedImagePath).getName(),
                 options.outMimeType,

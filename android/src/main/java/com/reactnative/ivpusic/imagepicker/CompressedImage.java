@@ -1,6 +1,6 @@
-package com.reactnative.ivpusic.imagepicker.dto;
+package com.reactnative.ivpusic.imagepicker;
 
-public class SingleImage {
+public class CompressedImage {
     private String path;
 
     private String filename;
@@ -12,7 +12,7 @@ public class SingleImage {
     private int height;
 
     // 构造函数
-    public SingleImage(String path, String filename, String mime, String modificationDate, int size, int width, int height) {
+    public CompressedImage(String path, String filename, String mime, String modificationDate, int size, int width, int height) {
         this.path = path;
         this.filename = filename;
         this.mime = mime;

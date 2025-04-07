@@ -7,8 +7,6 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeArray;
-import com.reactnative.ivpusic.imagepicker.dto.FullImage;
-import com.reactnative.ivpusic.imagepicker.ext.WritableMapUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,7 +25,7 @@ class ResultCollector {
     private boolean resultSent;
 
     // 图片数据列表
-    private final ArrayList<FullImage> imageDataList = new ArrayList<>();
+    private final ArrayList<ImageData> imageDataList = new ArrayList<>();
 
     // React 上下文
     private ReactApplicationContext reactContext;
@@ -91,7 +89,7 @@ class ResultCollector {
         }
     }
 
-    synchronized void notifyBatchCompressSuccess(FullImage imageData) {
+    synchronized void notifyBatchCompressSuccess(ImageData imageData) {
         if (!isRequestValid()) {
             return;
         }
@@ -104,11 +102,11 @@ class ResultCollector {
             // 将所有的照片信息发送到JS端
             SendEventService.sendAllLargeImageCompleteEvent(reactContext, imageDataList);
             // 选择照片的promise
-            promise.resolve(WritableMapUtil.convertImageListToWritableArray(imageDataList));
+            promise.resolve(Utils.getImageWritableArray(imageDataList));
             resultSent = true;
         }
     }
-    synchronized void notifySuccessImage(FullImage imageData) {
+    synchronized void notifySuccessImage(ImageData imageData) {
         if (!isRequestValid()) {
             return;
         }
@@ -122,16 +120,16 @@ class ResultCollector {
                 // 将所有的照片信息发送到JS端
                 SendEventService.sendAllThumbnailsCompleteEvent(reactContext, imageDataList);
                 // 选择照片的promise
-                promise.resolve(WritableMapUtil.convertImageListToWritableArray(imageDataList));
+                promise.resolve(Utils.getImageWritableArray(imageDataList));
                 resultSent = true;
             }
         } else {
             // 将单张照片信息发送到JS端
             SendEventService.sendSingleThumbnailCompleteEvent(reactContext, imageData);
             // 将所有的照片信息发送到JS端
-            SendEventService.sendAllThumbnailsCompleteEvent(reactContext, (ArrayList<FullImage>) Collections.singletonList(imageData));
+            SendEventService.sendAllThumbnailsCompleteEvent(reactContext, (ArrayList<ImageData>) Collections.singletonList(imageData));
 
-            WritableMap result = WritableMapUtil.convertSingleImageToWritableMap(imageData);
+            WritableMap result = Utils.getImageWritableMap(imageData);
             promise.resolve(result);
             resultSent = true;
         }
