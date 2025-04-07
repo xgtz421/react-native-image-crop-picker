@@ -22,14 +22,14 @@ public class SendEventService {
     // 发送单个缩略图生成完成的事件
     public static void sendSingleThumbnailCompleteEvent(ReactContext reactContext, ImageData imageData) {
         WritableMap params = Arguments.createMap();
-        params.putMap("image", Utils.getImageWritableMap(imageData));
+        params.putMap("image", WritableMapUtil.getImageWritableMap(imageData));
         sendEvent(reactContext, "onSingleThumbnailComplete", params);
     }
 
     // 发送所有缩略图生成完成的事件
     public static void sendAllThumbnailsCompleteEvent(ReactContext reactContext, ArrayList<ImageData> imageDataList) {
         WritableMap params = Arguments.createMap();
-        params.putArray("images", Utils.getImageWritableArray(imageDataList));
+        params.putArray("images", WritableMapUtil.getImageWritableArray(imageDataList));
         sendEvent(reactContext, "onAllThumbnailsComplete", params);
     }
 
@@ -43,14 +43,14 @@ public class SendEventService {
     // 发送单个大图生成完成的事件
     public static void sendSingleLargeImageCompleteEvent(ReactContext reactContext, ImageData imageData) {
         WritableMap params = Arguments.createMap();
-        params.putMap("image", Utils.getImageWritableMap(imageData));
+        params.putMap("image", WritableMapUtil.getImageWritableMap(imageData));
         sendEvent(reactContext, "onSingleLargeImageComplete", params);
     }
 
     // 发送所有大图生成完成的事件
     public static void sendAllLargeImageCompleteEvent(ReactContext reactContext, ArrayList<ImageData> imageDataList) {
         WritableMap params = Arguments.createMap();
-        params.putArray("images", Utils.getImageWritableArray(imageDataList));
+        params.putArray("images", WritableMapUtil.getImageWritableArray(imageDataList));
         sendEvent(reactContext, "onAllLargeImageComplete", params);
     }
 

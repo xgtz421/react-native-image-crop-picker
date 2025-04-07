@@ -138,24 +138,16 @@ class Compression {
         return resize(context, originalImagePath, bitmapOptions.outWidth, bitmapOptions.outHeight, maxWidth, maxHeight, targetQuality);
     }
 
+    // 参照https://github.dev/bamlab/react-native-image-resizer计算resize比例的方式，避免小图被放大
     private Pair<Integer, Integer> calculateTargetDimensions(int currentWidth, int currentHeight, int maxWidth, int maxHeight) {
-        int width = currentWidth;
-        int height = currentHeight;
-
-        if (width > maxWidth) {
-            float ratio = ((float) maxWidth / width);
-            height = (int) (height * ratio);
-            width = maxWidth;
-        }
-
-        if (height > maxHeight) {
-            float ratio = ((float) maxHeight / height);
-            width = (int) (width * ratio);
-            height = maxHeight;
-        }
-
-        return Pair.create(width, height);
+        float widthRatio = ((float) maxWidth / currentWidth);
+        float heightRatio = ((float) maxHeight / currentHeight);
+        float ratio = Math.min( Math.max(widthRatio, heightRatio), 1) ;
+        int finalWidth = (int) Math.round(currentWidth * ratio);
+        int finalHeight = (int) Math.round(currentHeight * ratio);
+        return Pair.create(currentWidth, currentHeight);
     }
+
 
     synchronized void compressVideo(final Activity activity, final ReadableMap options, final String originalVideo, final String compressedVideo, final Promise promise) {
         // todo: video compression

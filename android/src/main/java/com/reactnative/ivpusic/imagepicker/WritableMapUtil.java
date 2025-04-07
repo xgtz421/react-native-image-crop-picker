@@ -7,7 +7,7 @@ import com.facebook.react.bridge.WritableNativeMap;
 
 import java.util.ArrayList;
 
-public class Utils {
+public class WritableMapUtil {
 
     public static WritableMap getImageWritableMap(ImageData imageData) {
         WritableMap imageMap = new WritableNativeMap();

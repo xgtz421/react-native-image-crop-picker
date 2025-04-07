@@ -503,18 +503,17 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
             throw new Exception("Cannot resolve asset path.");
         }
 
-        Integer largeImageWidth = options.hasKey("largeImageWidth") ? options.getInt("largeImageWidth") : 1200;
-        Integer largeImageHeight = options.hasKey("largeImageHeight") ? options.getInt("largeImageHeight") : 1200;
-        Double largeImageQuality = options.hasKey("largeImageQuality") ? options.getDouble("largeImageQuality") : 0.8;
-        CompressedImage largeImage = getImageData(path, largeImageWidth, largeImageHeight, largeImageQuality);
+        CompressedImage largeImage = getImageData(path,
+                OptionUtil.GetLargeImageWidth(options),
+                OptionUtil.GetLargeImageHeight(options),
+                OptionUtil.GetLargeImageQuality(options));
 
-        boolean keepOriginImage = options.hasKey("keepOriginImage") && options.getBoolean("keepOriginImage");
         CompressedImage originImage = null;
-        if (keepOriginImage) {
-            Integer originImageWidth = options.hasKey("originImageWidth") ? options.getInt("originImageWidth") : null;
-            Integer originImageHeight = options.hasKey("originImageHeight") ? options.getInt("originImageHeight") : null;
-            Double originImageQuality = options.hasKey("originImageQuality") ? options.getDouble("originImageQuality") : 0.8;
-            originImage = getImageData(path, originImageWidth, originImageHeight, originImageQuality);
+        if (OptionUtil.GetKeepOriginImage(options)) {
+            originImage = getImageData(path,
+                    OptionUtil.GetOriginImageWidth(options),
+                    OptionUtil.GetOriginImageHeight(options),
+                    OptionUtil.GetOriginImageQuality(options));
         }
 
         ImageData imageData = new ImageData(uri.toString());
@@ -542,23 +541,22 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
             return null;
         }
 
-        Integer thumbnailWidth = options.hasKey("thumbnailWidth") ? options.getInt("thumbnailWidth") : 300;
-        Integer thumbnailHeight = options.hasKey("thumbnailHeight") ? options.getInt("thumbnailHeight") : 300;
-        Double thumbnailQuality = options.hasKey("thumbnailQuality") ? options.getDouble("thumbnailQuality") : 0.8;
-        CompressedImage thumbnail = getImageData(path, thumbnailWidth, thumbnailHeight, thumbnailQuality);
+        CompressedImage thumbnail = getImageData(path,
+                OptionUtil.GetThumbnailWidth(options),
+                OptionUtil.GetThumbnailHeight(options),
+                OptionUtil.GetThumbnailQuality(options));
 
-        Integer largeImageWidth = options.hasKey("largeImageWidth") ? options.getInt("largeImageWidth") : 1200;
-        Integer largeImageHeight = options.hasKey("largeImageHeight") ? options.getInt("largeImageHeight") : 1200;
-        Double largeImageQuality = options.hasKey("largeImageQuality") ? options.getDouble("largeImageQuality") : 0.8;
-        CompressedImage largeImage = getImageData(path, largeImageWidth, largeImageHeight, largeImageQuality);
+        CompressedImage largeImage = getImageData(path,
+                OptionUtil.GetLargeImageWidth(options),
+                OptionUtil.GetLargeImageHeight(options),
+                OptionUtil.GetLargeImageQuality(options));
 
-        boolean keepOriginImage = options.hasKey("keepOriginImage") && options.getBoolean("keepOriginImage");
         CompressedImage originImage = null;
-        if (keepOriginImage) {
-            Integer originImageWidth = options.hasKey("originImageWidth") ? options.getInt("originImageWidth") : null;
-            Integer originImageHeight = options.hasKey("originImageHeight") ? options.getInt("originImageHeight") : null;
-            Double originImageQuality = options.hasKey("originImageQuality") ? options.getDouble("originImageQuality") : 0.8;
-            originImage = getImageData(path, originImageWidth, originImageHeight, originImageQuality);
+        if (OptionUtil.GetKeepOriginImage(options)) {
+            originImage = getImageData(path,
+                    OptionUtil.GetOriginImageWidth(options),
+                    OptionUtil.GetOriginImageHeight(options),
+                    OptionUtil.GetOriginImageQuality(options));
         }
 
         ImageData imageData = new ImageData(uri.toString());
@@ -568,7 +566,7 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
             imageData.setOriginImage(originImage);
         }
 
-        return Utils.getImageWritableMap(imageData);
+        return WritableMapUtil.getImageWritableMap(imageData);
     }
 
     /**
@@ -586,10 +584,10 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
             return;
         }
 
-        Integer thumbnailWidth = options.hasKey("thumbnailWidth") ? options.getInt("thumbnailWidth") : 300;
-        Integer thumbnailHeight = options.hasKey("thumbnailHeight") ? options.getInt("thumbnailHeight") : 300;
-        Double thumbnailQuality = options.hasKey("thumbnailQuality") ? options.getDouble("thumbnailQuality") : 0.8;
-        CompressedImage compressedImage = getImageData(path, thumbnailWidth, thumbnailHeight, thumbnailQuality);
+        CompressedImage compressedImage = getImageData(path,
+                OptionUtil.GetThumbnailWidth(options),
+                OptionUtil.GetThumbnailHeight(options),
+                OptionUtil.GetThumbnailQuality(options));
 
         ImageData thumbnail = new ImageData(uri.toString());
         thumbnail.setThumbnailImage(compressedImage);

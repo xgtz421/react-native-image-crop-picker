@@ -102,7 +102,7 @@ class ResultCollector {
             // 将所有的照片信息发送到JS端
             SendEventService.sendAllLargeImageCompleteEvent(reactContext, imageDataList);
             // 选择照片的promise
-            promise.resolve(Utils.getImageWritableArray(imageDataList));
+            promise.resolve(WritableMapUtil.getImageWritableArray(imageDataList));
             resultSent = true;
         }
     }
@@ -120,7 +120,7 @@ class ResultCollector {
                 // 将所有的照片信息发送到JS端
                 SendEventService.sendAllThumbnailsCompleteEvent(reactContext, imageDataList);
                 // 选择照片的promise
-                promise.resolve(Utils.getImageWritableArray(imageDataList));
+                promise.resolve(WritableMapUtil.getImageWritableArray(imageDataList));
                 resultSent = true;
             }
         } else {
@@ -129,7 +129,7 @@ class ResultCollector {
             // 将所有的照片信息发送到JS端
             SendEventService.sendAllThumbnailsCompleteEvent(reactContext, (ArrayList<ImageData>) Collections.singletonList(imageData));
 
-            WritableMap result = Utils.getImageWritableMap(imageData);
+            WritableMap result = WritableMapUtil.getImageWritableMap(imageData);
             promise.resolve(result);
             resultSent = true;
         }
