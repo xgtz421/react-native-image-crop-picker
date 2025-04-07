@@ -415,36 +415,26 @@ declare module "react-native-image-crop-picker" {
         originImageHeight?: number; // 原图高度
     };
 
-   
+    export type CompressedImage = {
+        path: string;
+        filename: string;
+        width: number;
+        height: number;
+        size: number;
+        mime?: string;
+        modificationDate?: string;
+    };
 
     /**
      * 返回结果:压缩后的图片信息
      */
-    export type CompressedImage =  {
-        mime?: string;
-        modificationDate?: string;
-
+    export type PickedImage =  {
         // 选择图片Uri：/picker/0/com.android.providers.media.photopicker/media/1000015565
         // 拍照图片Uri：/external_files/Android/data/com.grapecity.leyserkids.teacher/files/Pictures/image-cffe3aa1-711e-46bf-9b19-05b59d1f1dd46039662563402116300.jpg
         mediaUri?: string; // 原图路径
-
-        thumbnailPath: string; // 缩略图路径 file:///storage/emulated/0/Android/data/com.grapecity.leyserkids.teacher/files/Pictures/31ef00db-1280-4cd8-addc-167d189033f8.jpg
-        thumbnailName: string; // 缩略图名称
-        thumbnailSize: number; // 缩略图大小
-        thumbnailWidth: number; // 缩略图宽度
-        thumbnailHeight: number; // 缩略图高度
-
-        largeImagePath?: string; // 大图路径
-        largeImageName?: string; // 大图名称
-        largeImageSize?: number; // 大图大小
-        largeImageWidth?: number; // 大图宽度
-        largeImageHeight?: number; // 大图高度
-
-        originImagePath?: string; // 原图路径
-        originImageName?: string; // 原图名称
-        originImageSize?: number; // 原图大小
-        originImageWidth?: number; // 原图宽度
-        originImageHeight?: number; // 原图高度
+        thumbnailImage?: CompressedImage;
+        largeImage?: CompressedImage;
+        originImage?: CompressedImage;
     };
 
     interface ImageVideoCommon {
@@ -570,18 +560,18 @@ declare module "react-native-image-crop-picker" {
         O extends { mediaType: 'video'; } ? Video :
         ImageOrVideo;
 
-    export function openPicker(options: OpenPickerOptions): Promise<CompressedImage[]>;
-    export function openCamera(options: OpenCameraOptions): Promise<CompressedImage[]>;
-    export function compressImage(options: CompressImageOptions): Promise<CompressedImage[]>;
-    export function openCropper(options: CropperOptions): Promise<CompressedImage>;
+    export function openPicker(options: OpenPickerOptions): Promise<PickedImage[]>;
+    export function openCamera(options: OpenCameraOptions): Promise<PickedImage[]>;
+    export function compressImage(options: CompressImageOptions): Promise<PickedImage[]>;
+    export function openCropper(options: CropperOptions): Promise<PickedImage>;
     export function clean(): Promise<void>;
     export function cleanSingle(path: string): Promise<void>;
 
     export interface ImageCropPicker {
-        openPicker(options: OpenPickerOptions): Promise<CompressedImage[]>;
-        openCamera(options: OpenCameraOptions): Promise<CompressedImage>;
-        compressImage(options: CompressImageOptions): Promise<CompressedImage[]>;
-        openCropper(options: CropperOptions): Promise<CompressedImage>;
+        openPicker(options: OpenPickerOptions): Promise<PickedImage[]>;
+        openCamera(options: OpenCameraOptions): Promise<PickedImage>;
+        compressImage(options: CompressImageOptions): Promise<PickedImage[]>;
+        openCropper(options: CropperOptions): Promise<PickedImage>;
         clean(): Promise<void>;
         cleanSingle(path: string): Promise<void>;
     }
@@ -603,13 +593,13 @@ declare module "react-native-image-crop-picker" {
         // 单个缩略图生成完成
         addListener(
             eventType: 'onSingleThumbnailComplete',
-            listener: (event: { image: CompressedImage }) => void
+            listener: (event: { image: PickedImage }) => void
         ): EventListener;
 
         // 所有缩略图生成完成
         addListener(
             eventType: 'onAllThumbnailsComplete',
-            listener: (event: { images: CompressedImage[] }) => void
+            listener: (event: { images: PickedImage[] }) => void
         ): EventListener;
 
          // 开始生成大图
@@ -621,13 +611,13 @@ declare module "react-native-image-crop-picker" {
         // 单个大图生成完成
         addListener(
             eventType: 'onSingleLargeImageComplete',
-            listener: (event: { image: CompressedImage }) => void
+            listener: (event: { image: PickedImage }) => void
         ): EventListener;
 
         // 所有大图生成完成
         addListener(
             eventType: 'onAllLargeImageComplete',
-            listener: (event: { images: CompressedImage[] }) => void
+            listener: (event: { images: PickedImage[] }) => void
         ): EventListener;
 
         // 生成缩略图或压缩大图失败的事件

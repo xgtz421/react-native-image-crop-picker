@@ -506,34 +506,22 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
         Integer largeImageWidth = options.hasKey("largeImageWidth") ? options.getInt("largeImageWidth") : 1200;
         Integer largeImageHeight = options.hasKey("largeImageHeight") ? options.getInt("largeImageHeight") : 1200;
         Double largeImageQuality = options.hasKey("largeImageQuality") ? options.getDouble("largeImageQuality") : 0.8;
-        CompressedImage compressedLargeImage = getImageData(path, largeImageWidth, largeImageHeight, largeImageQuality);
+        CompressedImage largeImage = getImageData(path, largeImageWidth, largeImageHeight, largeImageQuality);
 
         boolean keepOriginImage = options.hasKey("keepOriginImage") && options.getBoolean("keepOriginImage");
-        CompressedImage compressedOriginImage = null;
+        CompressedImage originImage = null;
         if (keepOriginImage) {
             Integer originImageWidth = options.hasKey("originImageWidth") ? options.getInt("originImageWidth") : null;
             Integer originImageHeight = options.hasKey("originImageHeight") ? options.getInt("originImageHeight") : null;
             Double originImageQuality = options.hasKey("originImageQuality") ? options.getDouble("originImageQuality") : 0.8;
-            compressedOriginImage = getImageData(path, originImageWidth, originImageHeight, originImageQuality);
+            originImage = getImageData(path, originImageWidth, originImageHeight, originImageQuality);
         }
 
-        ImageData imageData = new ImageData(
-                uri.toString(),
-                compressedLargeImage.getMime(),
-                compressedLargeImage.getModificationDate());
+        ImageData imageData = new ImageData(uri.toString());
+        imageData.setLargeImage(largeImage);
 
-        imageData.setLargeImagePath(compressedLargeImage.getPath());
-        imageData.setLargeImageName(compressedLargeImage.getFilename());
-        imageData.setLargeImageSize(compressedLargeImage.getSize());
-        imageData.setLargeImageWidth(compressedLargeImage.getWidth());
-        imageData.setLargeImageHeight(compressedLargeImage.getHeight());
-
-        if (compressedOriginImage != null) {
-            imageData.setOriginImagePath(compressedOriginImage.getPath());
-            imageData.setOriginImageName(compressedOriginImage.getFilename());
-            imageData.setOriginImageSize(compressedOriginImage.getSize());
-            imageData.setOriginImageWidth(compressedOriginImage.getWidth());
-            imageData.setOriginImageHeight(compressedOriginImage.getHeight());
+        if (originImage != null) {
+            imageData.setOriginImage(originImage);
         }
 
         resultCollector.notifyBatchCompressSuccess(imageData);
@@ -557,47 +545,27 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
         Integer thumbnailWidth = options.hasKey("thumbnailWidth") ? options.getInt("thumbnailWidth") : 300;
         Integer thumbnailHeight = options.hasKey("thumbnailHeight") ? options.getInt("thumbnailHeight") : 300;
         Double thumbnailQuality = options.hasKey("thumbnailQuality") ? options.getDouble("thumbnailQuality") : 0.8;
-        CompressedImage compressedThumbnail = getImageData(path, thumbnailWidth, thumbnailHeight, thumbnailQuality);
+        CompressedImage thumbnail = getImageData(path, thumbnailWidth, thumbnailHeight, thumbnailQuality);
 
         Integer largeImageWidth = options.hasKey("largeImageWidth") ? options.getInt("largeImageWidth") : 1200;
         Integer largeImageHeight = options.hasKey("largeImageHeight") ? options.getInt("largeImageHeight") : 1200;
         Double largeImageQuality = options.hasKey("largeImageQuality") ? options.getDouble("largeImageQuality") : 0.8;
-        CompressedImage compressedLargeImage = getImageData(path, largeImageWidth, largeImageHeight, largeImageQuality);
+        CompressedImage largeImage = getImageData(path, largeImageWidth, largeImageHeight, largeImageQuality);
 
         boolean keepOriginImage = options.hasKey("keepOriginImage") && options.getBoolean("keepOriginImage");
-        CompressedImage compressedOriginImage = null;
+        CompressedImage originImage = null;
         if (keepOriginImage) {
             Integer originImageWidth = options.hasKey("originImageWidth") ? options.getInt("originImageWidth") : null;
             Integer originImageHeight = options.hasKey("originImageHeight") ? options.getInt("originImageHeight") : null;
             Double originImageQuality = options.hasKey("originImageQuality") ? options.getDouble("originImageQuality") : 0.8;
-            compressedOriginImage = getImageData(path, originImageWidth, originImageHeight, originImageQuality);
+            originImage = getImageData(path, originImageWidth, originImageHeight, originImageQuality);
         }
 
-
-        ImageData imageData = new ImageData(
-                uri.toString(),
-                compressedThumbnail.getMime(),
-                compressedThumbnail.getModificationDate());
-
-        imageData.setThumbnailPath(compressedThumbnail.getPath());
-        imageData.setThumbnailName(compressedThumbnail.getFilename());
-        imageData.setThumbnailSize(compressedThumbnail.getSize());
-        imageData.setThumbnailWidth(compressedThumbnail.getWidth());
-        imageData.setThumbnailHeight(compressedThumbnail.getHeight());
-
-
-        imageData.setLargeImagePath(compressedLargeImage.getPath());
-        imageData.setLargeImageName(compressedLargeImage.getFilename());
-        imageData.setLargeImageSize(compressedLargeImage.getSize());
-        imageData.setLargeImageWidth(compressedLargeImage.getWidth());
-        imageData.setLargeImageHeight(compressedLargeImage.getHeight());
-
-        if (compressedOriginImage != null) {
-            imageData.setOriginImagePath(compressedOriginImage.getPath());
-            imageData.setOriginImageName(compressedOriginImage.getFilename());
-            imageData.setOriginImageSize(compressedOriginImage.getSize());
-            imageData.setOriginImageWidth(compressedOriginImage.getWidth());
-            imageData.setOriginImageHeight(compressedOriginImage.getHeight());
+        ImageData imageData = new ImageData(uri.toString());
+        imageData.setThumbnailImage(thumbnail);
+        imageData.setLargeImage(largeImage);
+        if (originImage != null) {
+            imageData.setOriginImage(originImage);
         }
 
         return Utils.getImageWritableMap(imageData);
@@ -623,17 +591,10 @@ class PickerModule extends ReactContextBaseJavaModule implements ActivityEventLi
         Double thumbnailQuality = options.hasKey("thumbnailQuality") ? options.getDouble("thumbnailQuality") : 0.8;
         CompressedImage compressedImage = getImageData(path, thumbnailWidth, thumbnailHeight, thumbnailQuality);
 
-        ImageData thumbnailImageData = new ImageData(
-                uri.toString(),
-                compressedImage.getMime(),
-                compressedImage.getModificationDate());
-        thumbnailImageData.setThumbnailPath(compressedImage.getPath());
-        thumbnailImageData.setThumbnailName(compressedImage.getFilename());
-        thumbnailImageData.setThumbnailWidth(compressedImage.getWidth());
-        thumbnailImageData.setThumbnailHeight(compressedImage.getHeight());
-        thumbnailImageData.setThumbnailSize(compressedImage.getSize());
+        ImageData thumbnail = new ImageData(uri.toString());
+        thumbnail.setThumbnailImage(compressedImage);
 
-        resultCollector.notifySuccessImage(thumbnailImageData);
+        resultCollector.notifySuccessImage(thumbnail);
     }
 
 

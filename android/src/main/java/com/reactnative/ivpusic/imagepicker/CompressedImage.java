@@ -2,7 +2,6 @@ package com.reactnative.ivpusic.imagepicker;
 
 public class CompressedImage {
     private String path;
-
     private String filename;
     private String mime;
     private String modificationDate;
