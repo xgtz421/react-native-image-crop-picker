@@ -30,4 +30,5 @@ dependencies {
     implementation(name: 'ucrop-release', ext: 'aar')
     implementation 'androidx.activity:activity:1.9.2'
     implementation "androidx.core:core:1.13.1"
+    implementation 'androidx.exifinterface:exifinterface:1.3.3'
 }
