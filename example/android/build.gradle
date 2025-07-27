@@ -10,6 +10,9 @@ buildscript {
         kotlinVersion = "1.8.0"
     }
     repositories {
+         flatDir {
+            dirs 'libs' // 确保这个路径正确指向了包含 .aar 文件的目录
+        }
         google()
         mavenCentral()
     }
